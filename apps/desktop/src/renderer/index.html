@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>TeamCow</title>
+    <script>
+      (function () {
+        try {
+          var root = document.documentElement
+          var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+          // Default to dark (app default). ThemeProvider applies the persisted preference on mount.
+          root.dataset.theme = "dark"
+          void prefersDark
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>
+

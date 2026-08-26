@@ -1,0 +1,41 @@
+node_modules/
+.DS_Store
+
+# Local environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Build and test output
+dist/
+out/
+release/
+.vite/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Generated assets (created by `yarn dev` / `yarn build`)
+apps/desktop/src/renderer/public/file-icons/
+
+# Local editor and coding-agent state
+.agents/
+.idea/
+.claude/settings.json
+.claude/settings.json.bak
+.claude/settings.local.json
+.claude/worktrees/
+.superpowers/
+.worktrees/
+
+# Local-only research checkouts and generated artifacts
+references/upstream/
+_ui-design-images/
+output/
+design-qa.md
+
+# Screenshots containing local development data (kept locally, not published)
+app-screenshots/0001.jpg
+app-screenshots/0001-en.png

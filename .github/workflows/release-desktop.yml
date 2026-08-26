@@ -1,0 +1,28 @@
+name: release-desktop
+
+on:
+  push:
+    tags:
+    - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-desktop:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: yarn
+      - run: corepack enable
+      - run: yarn install --frozen-lockfile
+      - run: yarn release:desktop
+      - uses: actions/upload-artifact@v4
+        with:
+          name: teamcow-macos-release
+          path: apps/desktop/release/*
+          if-no-files-found: error

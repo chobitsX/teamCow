@@ -1,0 +1,22 @@
+{
+  "app.name": "TeamCow",
+  "app.tagline": "Local coding workspace",
+  "action.cancel": "Cancel",
+  "action.confirm": "Confirm",
+  "action.close": "Close",
+  "action.save": "Save",
+  "action.send": "Send",
+  "action.attach": "Attach",
+  "state.ready": "Ready",
+  "state.idle": "Idle",
+  "state.running": "Running",
+  "state.completed": "Completed",
+  "state.failed": "Failed",
+  "state.unavailable": "Unavailable",
+  "state.empty": "empty",
+  "state.later": "Later",
+  "state.now": "Now",
+  "state.done": "Done",
+  "layout.resizeSidebar": "Drag to resize the sidebar",
+  "layout.resizeInspector": "Drag to resize the inspector"
+}

@@ -1,0 +1,10 @@
+* text=auto eol=lf
+
+*.icns binary
+*.jpg binary
+*.png binary
+*.woff binary
+*.woff2 binary
+
+yarn.lock linguist-generated=true
+apps/desktop/src/renderer/app/shell/file-icons/manifest.json linguist-generated=true

@@ -1,0 +1,45 @@
+{
+  "name": "teamcow",
+  "version": "0.0.0",
+  "description": "A local-first, chat-first workspace for coding agents on macOS.",
+  "license": "Apache-2.0",
+  "private": true,
+  "packageManager": "yarn@1.22.22",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "resolutions": {
+    "dompurify": "^3.4.14",
+    "js-yaml": "^4.3.1"
+  },
+  "scripts": {
+    "dev": "yarn workspace @teamcow/desktop dev",
+    "build": "yarn workspace @teamcow/desktop build",
+    "typecheck": "yarn workspace @teamcow/desktop typecheck && yarn workspace @teamcow/shared-types typecheck && yarn workspace @teamcow/db typecheck && yarn workspace @teamcow/i18n-resources typecheck",
+    "lint": "yarn workspace @teamcow/desktop lint && eslint --max-warnings=0 packages/shared-types/src scripts",
+    "i18n:check": "node scripts/i18n-check.mjs",
+    "test:desktop": "yarn workspace @teamcow/desktop test",
+    "test:i18n": "node --test scripts/__tests__/i18n-check.test.mjs",
+    "test:lint-config": "node --test scripts/__tests__/eslint-config.test.mjs",
+    "test:release": "node --test scripts/__tests__/release-desktop.test.mjs",
+    "test:publish-public": "node --test scripts/__tests__/publish-public-snapshot.test.mjs",
+    "test": "yarn test:desktop && yarn test:i18n && yarn test:lint-config && yarn test:release && yarn test:publish-public",
+    "ci:typecheck": "yarn typecheck",
+    "ci:test": "yarn test",
+    "ci:smoke": "yarn workspace @teamcow/desktop smoke",
+    "release:desktop": "node scripts/release-desktop.mjs",
+    "release:desktop:dry-run": "node scripts/release-desktop.mjs --dry-run",
+    "publish:public": "node scripts/publish-public-snapshot.mjs"
+  },
+  "engines": {
+    "node": ">=22.12.0 <23"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.3.0",
+    "eslint-plugin-i18next": "^6.1.4",
+    "globals": "^17.6.0",
+    "typescript-eslint": "^8.59.3"
+  }
+}

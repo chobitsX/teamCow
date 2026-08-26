@@ -1,0 +1,5 @@
+export const TEAMCOW_DESKTOP_CHANNEL = "teamcow:invoke"
+export const TEAMCOW_TERMINAL_OUTPUT_CHANNEL = "teamcow:terminal-output"
+export const TEAMCOW_RUN_EVENT_CHANNEL = "teamcow:run-event"
+export const TEAMCOW_WORKTREE_GIT_CHANGED_CHANNEL = "teamcow:worktree-git-changed"
+export const TEAMCOW_UPDATE_STATE_CHANNEL = "teamcow:update-state"

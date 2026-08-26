@@ -1,0 +1,37 @@
+name: Feature request
+description: Propose an improvement to the Project → Conversation workflow
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the desired workflow and where it belongs in TeamCow.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: area
+    attributes:
+      label: Primary area
+      options:
+        - Project / Conversation
+        - Provider integration
+        - Chat timeline
+        - Files / Editor
+        - Changes / Git
+        - Terminal
+        - Settings / Platform
+        - Other
+    validations:
+      required: true
