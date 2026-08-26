@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img alt="Platform: macOS" src="https://img.shields.io/badge/platform-macOS-20232a?logo=apple&logoColor=white">
+  <img alt="Verified on macOS" src="https://img.shields.io/badge/verified-macOS-20232a?logo=apple&logoColor=white">
   <img alt="Local first" src="https://img.shields.io/badge/data-local--first-315b7d">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-d6c7a1"></a>
   <img alt="Node.js 22" src="https://img.shields.io/badge/Node.js-22.22.2-47705b?logo=node.js&logoColor=white">
@@ -30,6 +30,9 @@
 
 > [!TIP]
 > 如果 `codex`、`claude`、`opencode` 或 `cursor-agent` 已经能在你的终端正常工作，它就可以接入 TeamCow。无需注册 TeamCow，无需重复填写 API Key，也无需把现有认证迁移到另一套账号系统。
+
+> [!IMPORTANT]
+> TeamCow 目前只在 macOS 上完成构建与功能验证。Windows 和 Linux 版本尚未构建确认，当前不应视为已支持平台。
 
 ## TeamCow 是什么
 
@@ -96,7 +99,7 @@ Project
 
 ### 环境要求
 
-- macOS（V1 的首要支持平台）
+- macOS（当前唯一完成构建与功能验证的平台）
 - Node.js `22.22.2`（见 `.node-version` 和 `.nvmrc`）
 - Yarn `1.22.22`（由根目录 `packageManager` 固定）
 - Git
@@ -125,7 +128,7 @@ yarn workspace @teamcow/desktop smoke
 
 ## 产品状态
 
-TeamCow 当前处于早期版本（`0.0.0`），以 macOS 源码构建和开发者试用为主。核心 Project、Conversation、Provider、Worktree、Chat 与 Inspector 工作流已经可用，但正式发行所需的签名、公证和自动更新源仍在准备中。
+TeamCow 当前处于早期版本（`0.0.1`），以 macOS 源码构建和开发者试用为主。核心 Project、Conversation、Provider、Worktree、Chat 与 Inspector 工作流已经可用，但正式发行所需的签名、公证和自动更新源仍在准备中。Windows 和 Linux 版本尚未进行构建与功能验证。
 
 本地构建 macOS 安装包：
 

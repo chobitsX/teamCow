@@ -253,7 +253,7 @@ export const runCodexAppServerTurn = async (input: CodexAppServerRunInput): Prom
       clientInfo: {
         name: "teamcow",
         title: "TeamCow",
-        version: "0.0.0"
+        version: "0.0.1"
       },
       capabilities: {
         experimentalApi: true

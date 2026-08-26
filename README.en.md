@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img alt="Platform: macOS" src="https://img.shields.io/badge/platform-macOS-20232a?logo=apple&logoColor=white">
+  <img alt="Verified on macOS" src="https://img.shields.io/badge/verified-macOS-20232a?logo=apple&logoColor=white">
   <img alt="Local first" src="https://img.shields.io/badge/data-local--first-315b7d">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-d6c7a1"></a>
   <img alt="Node.js 22" src="https://img.shields.io/badge/Node.js-22.22.2-47705b?logo=node.js&logoColor=white">
@@ -30,6 +30,9 @@
 
 > [!TIP]
 > If `codex`, `claude`, `opencode`, or `cursor-agent` already works in your terminal, it can work in TeamCow. There is no TeamCow account to create, no API key to enter again, and no provider authentication to migrate.
+
+> [!IMPORTANT]
+> TeamCow has currently been built and functionally verified only on macOS. Windows and Linux builds have not yet been validated and should not be considered supported platforms.
 
 ## What is TeamCow?
 
@@ -96,7 +99,7 @@ If a provider is missing, unauthenticated, or misconfigured, TeamCow reports the
 
 ### Requirements
 
-- macOS, the primary V1 platform
+- macOS, currently the only platform with a verified build and functional testing
 - Node.js `22.22.2` (`.node-version` and `.nvmrc`)
 - Yarn `1.22.22`, pinned by the root `packageManager` field
 - Git
@@ -125,7 +128,7 @@ yarn workspace @teamcow/desktop smoke
 
 ## Project status
 
-TeamCow is currently an early `0.0.0` project intended primarily for source builds and developer evaluation on macOS. The core Project, Conversation, Provider, Worktree, Chat, and Inspector workflows are available; production signing, notarization, and the update feed are still being prepared.
+TeamCow is currently an early `0.0.1` project intended primarily for source builds and developer evaluation on macOS. The core Project, Conversation, Provider, Worktree, Chat, and Inspector workflows are available; production signing, notarization, and the update feed are still being prepared. Windows and Linux builds have not yet undergone build or functional verification.
 
 Build a local macOS package with:
 
