@@ -252,14 +252,18 @@ export const createReleaseManifest = ({
   workflowRunId: env.GITHUB_RUN_ID ?? "local",
   readiness: readiness.classification,
   generatedAt: new Date().toISOString(),
-  artifacts: artifacts.map((artifact) => {
+  artifacts: artifacts.flatMap((artifact) => {
     const artifactPath = resolve(releaseDir, artifact)
     const stats = statSync(artifactPath)
-    return {
+    if (!stats.isFile()) {
+      return []
+    }
+
+    return [{
       path: artifact,
       bytes: stats.size,
       sha256: sha256File(artifactPath)
-    }
+    }]
   })
 })
 

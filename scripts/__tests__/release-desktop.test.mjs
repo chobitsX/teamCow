@@ -210,6 +210,8 @@ test("release manifest ties artifacts to version, commit, ref, readiness, and ha
   const tempDir = mkdtempSync(join(tmpdir(), "teamcow-release-manifest-"))
 
   try {
+    mkdirSync(join(tempDir, "mac-arm64/TeamCow.app/Contents"), { recursive: true })
+    writeFileSync(join(tempDir, "mac-arm64/TeamCow.app/Contents/Info.plist"), "plist")
     writeFileSync(join(tempDir, "TeamCow-0.0.0-arm64.dmg"), "dmg")
     writeFileSync(join(tempDir, "TeamCow-0.0.0-arm64.zip"), "zip")
 
@@ -228,6 +230,7 @@ test("release manifest ties artifacts to version, commit, ref, readiness, and ha
     assert.equal(manifest.workflowRunId, "123")
     assert.equal(manifest.readiness, "unsigned-local-artifact")
     assert.equal(manifest.artifacts.length, 2)
+    assert.equal(manifest.artifacts.some((artifact) => artifact.path.endsWith(".app")), false)
     assert.match(manifest.artifacts[0].sha256, /^[a-f0-9]{64}$/)
   } finally {
     rmSync(tempDir, { recursive: true, force: true })
