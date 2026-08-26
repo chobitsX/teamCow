@@ -21,7 +21,7 @@ jobs:
       - run: corepack enable
       - run: yarn install --frozen-lockfile
       - run: yarn release:desktop
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: teamcow-macos-release
           path: apps/desktop/release/*
