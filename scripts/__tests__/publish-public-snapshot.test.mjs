@@ -1,7 +1,7 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 import { execFileSync, spawnSync } from "node:child_process"
-import { cpSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { join, resolve } from "node:path"
 import { tmpdir } from "node:os"
 import {
@@ -63,12 +63,15 @@ test("validatePublicSnapshot rejects local-only paths and private identities", (
 
   try {
     writeFileSync(join(directory, ".env"), "TOKEN=secret\n")
+    mkdirSync(join(directory, "app-screenshots"))
+    writeFileSync(join(directory, "app-screenshots/main.jpg"), "private product screenshot\n")
     writeFileSync(join(directory, "private.txt"), `/Users/${"lu" + "sun"}/private\n`)
-    git(directory, ["add", "-f", ".env", "private.txt"])
+    git(directory, ["add", "-f", ".env", "app-screenshots/main.jpg", "private.txt"])
     git(directory, ["commit", "-m", "add private fixtures"])
 
     const problems = validatePublicSnapshot({ cwd: directory })
     assert.match(problems.join("\n"), /denied environment file: \.env/)
+    assert.match(problems.join("\n"), /denied private screenshot: app-screenshots\/main\.jpg/)
     assert.match(problems.join("\n"), /possible credential or private identity found/)
   } finally {
     rmSync(directory, { recursive: true, force: true })

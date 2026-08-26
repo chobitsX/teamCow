@@ -5,66 +5,105 @@
 <h1 align="center">TeamCow</h1>
 
 <p align="center">
-  A local-first, chat-first AI coding workspace for macOS.
+  <strong>Your coding agents. Their native power. One better workspace.</strong>
+</p>
+
+<p align="center">
+  Bring the Codex, Claude Code, OpenCode, and Cursor Agent CLIs already installed<br>
+  and authenticated on your Mac into one local-first, chat-first desktop workspace.
+</p>
+
+<p align="center">
+  <img alt="Platform: macOS" src="https://img.shields.io/badge/platform-macOS-20232a?logo=apple&logoColor=white">
+  <img alt="Local first" src="https://img.shields.io/badge/data-local--first-315b7d">
+  <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-d6c7a1"></a>
+  <img alt="Node.js 22" src="https://img.shields.io/badge/Node.js-22.22.2-47705b?logo=node.js&logoColor=white">
 </p>
 
 <p align="center">
   <a href="README.md">中文</a> · English
 </p>
 
-> [!IMPORTANT]
-> TeamCow is currently an early `0.0.0` project intended for source builds and developer evaluation on macOS. Review the security notes and release status below before using it on important projects.
+![The TeamCow three-column workspace: projects, chat, and inspector](app-screenshots/main-sanitized-en.png)
 
-![Create a conversation in TeamCow](app-screenshots/conversation-launcher-en.png)
+<p align="center"><em>Sanitized product visual based on the current TeamCow interface. Projects, paths, and conversations contain demo data.</em></p>
+
+> [!TIP]
+> If `codex`, `claude`, `opencode`, or `cursor-agent` already works in your terminal, it can work in TeamCow. There is no TeamCow account to create, no API key to enter again, and no provider authentication to migrate.
 
 ## What is TeamCow?
 
-TeamCow connects AI coding agents already installed on your Mac to one desktop workspace. It does not reimplement the agents or take ownership of their accounts and authentication. You keep using each provider's native CLI; TeamCow organizes projects, conversations, execution targets, live activity, and result review.
+TeamCow is not another AI agent and it is not a model API proxy. It invokes provider CLIs already available on your Mac, leaving models, tools, authentication, permission prompts, and native execution to the provider. TeamCow adds project and conversation management, structured chat, Git worktree isolation, and a review workspace built around Files, Changes, Git, and Terminal.
 
-The product model is `Project -> Conversation`. A project can contain multiple conversations, and each conversation is bound to one provider, model, and working directory or Git worktree for isolated execution and side-by-side comparison.
+That means a consistent desktop experience does not require replacing the agents you already trust. Providers keep doing the agent work; TeamCow makes multi-agent work easier to organize, run in parallel, and verify.
 
-## Highlights
+## Why TeamCow?
 
-- Use Codex, Claude Code, OpenCode, and Cursor Agent from one interface.
-- Bind each conversation to the project directory, an existing worktree, or a new worktree.
-- Review normalized output, tool activity, and run status in the chat timeline.
-- Inspect or take over local work through Files, Changes, Git, and Terminal.
-- Persist projects, conversations, run events, and artifacts in local SQLite storage.
-- Switch between English and Chinese interfaces, light/dark themes, and macOS notifications.
+| What gets difficult today | What TeamCow adds |
+| --- | --- |
+| Agents are scattered across terminals and project context becomes hard to follow | A `Project → Conversation` workflow that binds each task to its provider, model, and execution target |
+| A unified tool might replace mature agents with a reduced generic implementation | Native local CLIs keep their existing models, tools, authentication, and permission semantics |
+| Multiple agents editing one checkout can conflict | Each conversation can use an isolated Git worktree for parallel execution |
+| An agent says it is done, but the actual result is difficult to judge | Files, Changes, Git, and Terminal reveal the real files, diffs, state, and execution result |
+| Raw terminal output is fragmented and hard to revisit | Provider output becomes chat messages, reasoning summaries, tool events, and run states |
+| You do not want another service holding credentials or workflow data | TeamCow has no separate sign-in system and keeps projects, conversations, and run history local |
 
-## How it fits together
+## Native agents, desktop workflow
+
+![TeamCow conceptual workflow: local CLIs, conversations, worktrees, and diff review](docs/assets/teamcow-workflow-concept.png)
+
+<p align="center"><em>Conceptual workflow: connect local CLIs, work in isolated worktrees, and review real changes before merging.</em></p>
+
+TeamCow keeps the product model intentionally simple:
 
 ```text
 Project
 └── Conversation
-    ├── Provider + Model
+    ├── Native provider CLI + Model
     ├── Access mode
     ├── Working directory / Git worktree
-    ├── Chat timeline
+    ├── Structured chat timeline
     └── Inspector (Files / Changes / Git / Terminal)
 ```
 
-TeamCow uses the provider's native status as the source of truth for readiness. Install and authenticate at least one supported CLI before launching TeamCow:
+A project can contain multiple conversations. Each conversation is bound to one provider, model, and working directory or Git worktree, so agents can work in parallel without making Worktree a top-level concept users have to manage.
+
+## Highlights
+
+- **Bring your own agent:** connect Codex, Claude Code, OpenCode, and Cursor Agent already installed on your Mac—without a TeamCow account or duplicate authentication.
+- **Keep native capabilities:** providers remain responsible for models, tools, authentication, permissions, and execution; TeamCow does not replace them with a generic agent.
+- **Structured chat:** distinguish user messages, provider output, reasoning summaries, tool events, and state changes instead of dumping a raw terminal stream into chat.
+- **Parallel worktrees:** bind conversations to independent Git worktrees to isolate work and compare results.
+- **Review the result:** inspect what agents actually wrote through Files, Changes, Git, and diff views.
+- **Take over when needed:** continue from the built-in Terminal or editor in the same working directory.
+- **Local persistence:** store projects, conversations, run events, and artifacts in SQLite so partial output remains reviewable after failures or interruptions.
+- **A macOS workbench:** English and Chinese interfaces, light/dark themes, desktop notifications, and a native window workflow.
+
+## Supported providers
+
+Install and authenticate at least one provider through its native CLI first. TeamCow treats the CLI's own version and authentication state as the source of truth for readiness; an auxiliary network probe does not override a confirmed native login.
 
 | Provider | Local command | Official documentation |
 | --- | --- | --- |
 | Codex | `codex` | [openai/codex](https://github.com/openai/codex) |
-| Claude Code | `claude` | [Claude Code docs](https://docs.anthropic.com/en/docs/claude-code/getting-started) |
+| Claude Code | `claude` | [Claude Code docs](https://code.claude.com/docs/en/getting-started) |
 | OpenCode | `opencode` | [OpenCode docs](https://opencode.ai/docs) |
 | Cursor Agent | `cursor-agent` | [Cursor CLI docs](https://cursor.com/docs/cli/overview) |
 
-## Local development
+If a provider is missing, unauthenticated, or misconfigured, TeamCow reports the reason and leaves authentication in the provider's native tooling.
+
+## Quick start
 
 ### Requirements
 
-- macOS (the primary V1 platform)
+- macOS, the primary V1 platform
 - Node.js `22.22.2` (`.node-version` and `.nvmrc`)
-- Yarn `1.22.22` (pinned by the root `packageManager` field)
+- Yarn `1.22.22`, pinned by the root `packageManager` field
 - Git
 - Xcode Command Line Tools for Electron native modules
-- At least one installed and natively authenticated provider CLI
+- At least one provider CLI that already works in your terminal
 
-### Start the app
+### Run from source
 
 ```bash
 corepack enable
@@ -81,17 +120,28 @@ yarn typecheck
 yarn lint
 yarn test
 yarn i18n:check
-yarn build
 yarn workspace @teamcow/desktop smoke
 ```
 
-### Build a macOS package
+## Project status
+
+TeamCow is currently an early `0.0.0` project intended primarily for source builds and developer evaluation on macOS. The core Project, Conversation, Provider, Worktree, Chat, and Inspector workflows are available; production signing, notarization, and the update feed are still being prepared.
+
+Build a local macOS package with:
 
 ```bash
 yarn workspace @teamcow/desktop package:mac
 ```
 
-Artifacts are written to `apps/desktop/release/`. Local builds are unsigned and unnotarized by default, and the update feed is still a placeholder. Do not distribute them as production releases without completing signing, notarization, update-feed configuration, and the [macOS V1 release checklist](docs/macos-v1-release-checklist.md).
+Artifacts are written to `apps/desktop/release/`. Local packages are unsigned and unnotarized by default and should not be distributed as production releases before completing the [macOS V1 release checklist](docs/macos-v1-release-checklist.md).
+
+## Local data and security
+
+- TeamCow stores `teamcow.sqlite`, conversation attachments, and application logs under Electron's `userData` directory. These files are not part of the repository.
+- TeamCow reuses native provider authentication and does not ask you to paste tokens or API keys into a TeamCow account system.
+- Logs, issues, and screenshots must not contain provider configuration, user project source, databases, conversation content, or identifying local paths.
+- `full-access` enables the provider's native high-trust execution mode. Use it only when you understand the provider's behavior and trust the current project.
+- Do not open a public issue for a vulnerability. Follow the private reporting process in [SECURITY.md](SECURITY.md).
 
 ## Repository layout
 
@@ -100,19 +150,12 @@ apps/desktop/                 Electron + React desktop application
 packages/db/                  SQLite / Drizzle schema and migrations
 packages/shared-types/        Cross-process types and Zod contracts
 packages/i18n-resources/      English and Chinese resources
-scripts/                      Repository checks and release scripts
+scripts/                      Repository checks and publishing scripts
 docs/                         Architecture, troubleshooting, release, and design records
-app-screenshots/              Sanitized screenshots used by public documentation
+app-screenshots/              Sanitized product visuals used by the README
 ```
 
-File icons are generated from the pinned `material-icon-theme` dependency before `yarn dev` and `yarn build`, keeping more than 1,000 derived SVGs out of source control. See the [architecture overview](docs/architecture.md) for the runtime boundaries.
-
-## Local data and security
-
-- TeamCow stores `teamcow.sqlite`, conversation attachments, and application logs under Electron's `userData` directory. These files are not part of the repository.
-- TeamCow invokes provider tools installed on your machine and inherits their authentication state. Never attach tokens, provider configuration, databases, logs, real project code, or unredacted screenshots to an issue.
-- `full-access` enables the provider's native high-trust execution mode. Use it only when you understand the provider's behavior and trust the current project.
-- Do not open a public issue for a vulnerability. Follow the private reporting process in [SECURITY.md](SECURITY.md).
+File icons are generated from the pinned `material-icon-theme` dependency before `yarn dev` and `yarn build`, keeping more than 1,000 derived SVGs out of source control. See the [architecture overview](docs/architecture.md) for runtime boundaries.
 
 ## Contributing
 
@@ -120,10 +163,8 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Use the i
 
 Maintainers publish the public `main` branch as snapshots from a separate `dev` history. See the [public snapshot publishing workflow](docs/open-source-publishing.md) for its safety constraints.
 
-See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for dependency and brand notices. TeamCow is not affiliated with or endorsed by OpenAI, Anthropic, OpenCode, or Cursor. Their names and marks belong to their respective owners.
-
-## License
+## License and trademarks
 
 Copyright 2026 chobitsX.
 
-TeamCow is open source under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for copyright and attribution information. Third-party dependencies, assets, and marks remain subject to their own terms as documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Apache-2.0 does not grant rights to the TeamCow or third-party trademarks.
+TeamCow is open source under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for copyright and attribution information. Third-party dependencies, assets, and marks remain subject to their own terms as documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). TeamCow is not affiliated with or endorsed by OpenAI, Anthropic, OpenCode, or Cursor; Apache-2.0 does not grant rights to TeamCow or third-party trademarks.

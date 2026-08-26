@@ -32,6 +32,7 @@ const deniedPublicPaths = [
     description: "generated file icon"
   },
   { pattern: /^app-screenshots\/0001(?:-en)?\.(?:jpg|png)$/, description: "private screenshot" },
+  { pattern: /^app-screenshots\/main(?:-en)?\.(?:jpg|png)$/, description: "private screenshot" },
   { pattern: /^design-qa\.md$/, description: "local design QA output" }
 ]
 
