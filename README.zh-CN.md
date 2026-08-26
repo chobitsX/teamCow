@@ -34,6 +34,16 @@
 > [!IMPORTANT]
 > TeamCow 目前只在 macOS 上完成构建与功能验证。Windows 和 Linux 版本尚未构建确认，当前不应视为已支持平台。
 
+## 下载 macOS 预览版
+
+请从 GitHub Releases [下载适用于 Apple Silicon 的 TeamCow `v0.0.1`](https://github.com/chobitsX/teamCow/releases/tag/v0.0.1)。这是仅面向 macOS Apple Silicon（`arm64`）的未签名、ad-hoc 签名预览包；Intel Mac、Windows 和 Linux 尚未验证，目前也不提供自动更新。
+
+1. 下载 `TeamCow-0.0.1-arm64.dmg`，并将 TeamCow 拖入“应用程序”。
+2. 先尝试打开一次。如果 macOS 阻止启动，请前往“系统设置 → 隐私与安全性”，找到 TeamCow 提示并选择“仍要打开”。
+3. 使用 Release 附带的 `teamcow-release-manifest.json` 核对 DMG 的 SHA-256 校验值。
+
+只有在 DMG 来自本仓库 GitHub Release 且校验值一致时才应覆盖 macOS 安全提示。TeamCow 不要求关闭 Gatekeeper，也不要求通过命令行移除隔离属性。
+
 ## TeamCow 是什么
 
 TeamCow 不是新的 AI agent，也不是模型 API 的中转服务。它直接调用本机已有的 provider CLI，让 provider 继续负责模型、工具、认证、权限确认和原生执行；TeamCow 在此基础上增加项目与 Conversation 管理、结构化 Chat、Git worktree 隔离，以及 Files、Changes、Git、Terminal 组成的结果审查工作台。

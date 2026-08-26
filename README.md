@@ -34,6 +34,16 @@
 > [!IMPORTANT]
 > TeamCow has currently been built and functionally verified only on macOS. Windows and Linux builds have not yet been validated and should not be considered supported platforms.
 
+## Download the macOS preview
+
+[Download TeamCow `v0.0.1` for Apple Silicon](https://github.com/chobitsX/teamCow/releases/tag/v0.0.1) from GitHub Releases. This is an unsigned, ad-hoc-signed preview build for macOS on Apple Silicon (`arm64`). Intel Macs, Windows, and Linux have not been validated, and automatic updates are not yet available.
+
+1. Download `TeamCow-0.0.1-arm64.dmg` and drag TeamCow to `Applications`.
+2. Try to open TeamCow once. If macOS blocks it, open **System Settings → Privacy & Security**, find the TeamCow notice, and choose **Open Anyway**.
+3. Compare the DMG's SHA-256 checksum with `teamcow-release-manifest.json` attached to the release.
+
+Only override macOS security when the DMG came from this repository's GitHub Release and its checksum matches. TeamCow does not require disabling Gatekeeper or removing quarantine attributes from the command line.
+
 ## What is TeamCow?
 
 TeamCow is not another AI agent and it is not a model API proxy. It invokes provider CLIs already available on your Mac, leaving models, tools, authentication, permission prompts, and native execution to the provider. TeamCow adds project and conversation management, structured chat, Git worktree isolation, and a review workspace built around Files, Changes, Git, and Terminal.

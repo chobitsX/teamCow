@@ -31,7 +31,9 @@ export default {
   mac: {
     target: ["dmg", "zip"],
     artifactName: "${productName}-${version}-${arch}.${ext}",
-    icon: "build/icon.icns"
+    icon: "build/icon.icns",
+    identity: "-",
+    hardenedRuntime: false
   },
   publish: [
     {

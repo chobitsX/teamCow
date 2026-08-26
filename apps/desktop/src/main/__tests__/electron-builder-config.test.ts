@@ -11,6 +11,8 @@ describe("electron-builder config", () => {
     expect(config.mac.target).toEqual(expect.arrayContaining(["dmg", "zip"]))
     expect(config.mac.artifactName).toBe("${productName}-${version}-${arch}.${ext}")
     expect(config.mac.icon).toBe("build/icon.icns")
+    expect(config.mac.identity).toBe("-")
+    expect(config.mac.hardenedRuntime).toBe(false)
     expect(config.extraResources).toEqual(expect.arrayContaining([
       { from: "../../LICENSE", to: "LICENSE" },
       { from: "../../NOTICE", to: "NOTICE" },
