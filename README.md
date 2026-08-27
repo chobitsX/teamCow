@@ -36,13 +36,13 @@
 
 ## Download the macOS preview
 
-[Download TeamCow `v0.0.1` for Apple Silicon](https://github.com/chobitsX/teamCow/releases/tag/v0.0.1) from GitHub Releases. This is an unsigned, ad-hoc-signed preview build for macOS on Apple Silicon (`arm64`). Intel Macs, Windows, and Linux have not been validated, and automatic updates are not yet available.
+[Download TeamCow `v0.0.2` for Apple Silicon](https://github.com/chobitsX/teamCow/releases/tag/v0.0.2) from GitHub Releases. The macOS Apple Silicon (`arm64`) preview is signed with a Developer ID certificate and notarized by Apple. Intel Macs, Windows, and Linux have not been validated, and automatic updates are not yet available.
 
-1. Download `TeamCow-0.0.1-arm64.dmg` and drag TeamCow to `Applications`.
-2. Try to open TeamCow once. If macOS blocks it, open **System Settings → Privacy & Security**, find the TeamCow notice, and choose **Open Anyway**.
+1. Download `TeamCow-0.0.2-arm64.dmg` and drag TeamCow to `Applications`.
+2. Open TeamCow normally. macOS can verify both the Developer ID signature and the stapled Apple notarization ticket.
 3. Compare the DMG's SHA-256 checksum with `teamcow-release-manifest.json` attached to the release.
 
-Only override macOS security when the DMG came from this repository's GitHub Release and its checksum matches. TeamCow does not require disabling Gatekeeper or removing quarantine attributes from the command line.
+If macOS reports that the signature or notarization cannot be verified, confirm that the DMG came from this repository's GitHub Release and that its checksum matches before reporting the problem. TeamCow does not require disabling Gatekeeper, choosing **Open Anyway**, or removing quarantine attributes from the command line.
 
 ## What is TeamCow?
 
@@ -138,7 +138,7 @@ yarn workspace @teamcow/desktop smoke
 
 ## Project status
 
-TeamCow is currently an early `0.0.1` project intended primarily for source builds and developer evaluation on macOS. The core Project, Conversation, Provider, Worktree, Chat, and Inspector workflows are available; production signing, notarization, and the update feed are still being prepared. Windows and Linux builds have not yet undergone build or functional verification.
+TeamCow is currently an early `0.0.2` project intended primarily for developer evaluation on macOS. The core Project, Conversation, Provider, Worktree, Chat, and Inspector workflows are available. macOS preview downloads are signed with Developer ID and notarized by Apple; the automatic update feed is not yet available. Windows and Linux builds have not yet undergone build or functional verification.
 
 Build a local macOS package with:
 

@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from "node:url"
 const repoRoot = resolve(fileURLToPath(import.meta.url), "../..")
 const desktopReleaseDir = resolve(repoRoot, "apps/desktop/release")
 const placeholderUpdateFeedUrl = "https://updates.teamcow.local/download"
+const releaseManifestName = "teamcow-release-manifest.json"
 
 const requiredArtifactChecks = [
   { label: "macOS installer (.dmg)", test: (artifact) => artifact.endsWith(".dmg") },
@@ -157,8 +158,15 @@ export const validateReleaseArtifacts = (artifacts, { releaseDir = desktopReleas
 }
 
 export const getReleaseReadiness = (env = process.env, { builderPublishUrl } = {}) => {
-  const signing = env.CSC_LINK && env.CSC_KEY_PASSWORD ? "configured" : "missing"
-  const notarization = env.APPLE_ID && env.APPLE_APP_SPECIFIC_PASSWORD && env.APPLE_TEAM_ID ? "configured" : "missing"
+  const signing = (
+    (env.CSC_LINK && env.CSC_KEY_PASSWORD) ||
+    env.CSC_NAME
+  ) ? "configured" : "missing"
+  const notarization = (
+    (env.APPLE_API_KEY && env.APPLE_API_KEY_ID && env.APPLE_API_ISSUER) ||
+    (env.APPLE_ID && env.APPLE_APP_SPECIFIC_PASSWORD && env.APPLE_TEAM_ID) ||
+    env.APPLE_KEYCHAIN_PROFILE
+  ) ? "configured" : "missing"
   const updateFeed = env.TEAMCOW_UPDATE_FEED_URL ? "configured" : "missing"
   const builderFeedMatches = !builderPublishUrl ||
     (builderPublishUrl === env.TEAMCOW_UPDATE_FEED_URL && builderPublishUrl !== placeholderUpdateFeedUrl)
@@ -253,6 +261,10 @@ export const createReleaseManifest = ({
   readiness: readiness.classification,
   generatedAt: new Date().toISOString(),
   artifacts: artifacts.flatMap((artifact) => {
+    if (artifact === releaseManifestName) {
+      return []
+    }
+
     const artifactPath = resolve(releaseDir, artifact)
     const stats = statSync(artifactPath)
     if (!stats.isFile()) {
@@ -289,7 +301,7 @@ export const runReleasePlan = (plan) => {
   const validation = validateReleaseArtifacts(artifacts, { releaseDir: plan.releaseDir, buildStartedAt })
   const readiness = getReleaseReadiness()
   const manifest = createReleaseManifest({ releaseDir: plan.releaseDir, artifacts, readiness })
-  writeFileSync(resolve(plan.releaseDir, "teamcow-release-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`)
+  writeFileSync(resolve(plan.releaseDir, releaseManifestName), `${JSON.stringify(manifest, null, 2)}\n`)
 
   console.log("[release-desktop] artifact:list")
   for (const artifact of artifacts) {

@@ -36,13 +36,13 @@
 
 ## 下载 macOS 预览版
 
-请从 GitHub Releases [下载适用于 Apple Silicon 的 TeamCow `v0.0.1`](https://github.com/chobitsX/teamCow/releases/tag/v0.0.1)。这是仅面向 macOS Apple Silicon（`arm64`）的未签名、ad-hoc 签名预览包；Intel Mac、Windows 和 Linux 尚未验证，目前也不提供自动更新。
+请从 GitHub Releases [下载适用于 Apple Silicon 的 TeamCow `v0.0.2`](https://github.com/chobitsX/teamCow/releases/tag/v0.0.2)。macOS Apple Silicon（`arm64`）预览包已使用 Developer ID 证书签名并通过 Apple 公证；Intel Mac、Windows 和 Linux 尚未验证，目前也不提供自动更新。
 
-1. 下载 `TeamCow-0.0.1-arm64.dmg`，并将 TeamCow 拖入“应用程序”。
-2. 先尝试打开一次。如果 macOS 阻止启动，请前往“系统设置 → 隐私与安全性”，找到 TeamCow 提示并选择“仍要打开”。
+1. 下载 `TeamCow-0.0.2-arm64.dmg`，并将 TeamCow 拖入“应用程序”。
+2. 正常打开 TeamCow；macOS 可以验证 Developer ID 签名和已装订的 Apple 公证票据。
 3. 使用 Release 附带的 `teamcow-release-manifest.json` 核对 DMG 的 SHA-256 校验值。
 
-只有在 DMG 来自本仓库 GitHub Release 且校验值一致时才应覆盖 macOS 安全提示。TeamCow 不要求关闭 Gatekeeper，也不要求通过命令行移除隔离属性。
+如果 macOS 报告无法验证签名或公证，请先确认 DMG 来自本仓库 GitHub Release 且校验值一致，再提交问题。TeamCow 不要求关闭 Gatekeeper、选择“仍要打开”，也不要求通过命令行移除隔离属性。
 
 ## TeamCow 是什么
 
@@ -138,7 +138,7 @@ yarn workspace @teamcow/desktop smoke
 
 ## 产品状态
 
-TeamCow 当前处于早期版本（`0.0.1`），以 macOS 源码构建和开发者试用为主。核心 Project、Conversation、Provider、Worktree、Chat 与 Inspector 工作流已经可用，但正式发行所需的签名、公证和自动更新源仍在准备中。Windows 和 Linux 版本尚未进行构建与功能验证。
+TeamCow 当前处于早期版本（`0.0.2`），以 macOS 开发者试用为主。核心 Project、Conversation、Provider、Worktree、Chat 与 Inspector 工作流已经可用。macOS 预览包已使用 Developer ID 正式签名并通过 Apple 公证；自动更新源尚未开放。Windows 和 Linux 版本尚未进行构建与功能验证。
 
 本地构建 macOS 安装包：
 

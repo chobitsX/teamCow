@@ -120,6 +120,28 @@ test("release readiness does not mark updater feed ready when builder still uses
   )
 })
 
+test("release readiness supports a keychain signing identity and App Store Connect API key", () => {
+  assert.equal(
+    getReleaseReadiness({
+      CSC_NAME: "Developer ID Application: Example (TEAMID)",
+      APPLE_API_KEY: "/tmp/AuthKey_TEST.p8",
+      APPLE_API_KEY_ID: "TESTKEY",
+      APPLE_API_ISSUER: "00000000-0000-0000-0000-000000000000"
+    }).classification,
+    "signed-notarized-release-artifact"
+  )
+})
+
+test("release readiness supports notarization credentials stored in the default keychain", () => {
+  assert.equal(
+    getReleaseReadiness({
+      CSC_NAME: "Developer ID Application: Example (TEAMID)",
+      APPLE_KEYCHAIN_PROFILE: "teamcow-notary"
+    }).classification,
+    "signed-notarized-release-artifact"
+  )
+})
+
 test("release artifact validation requires mac install, update payload, and metadata", () => {
   const tempDir = mkdtempSync(join(tmpdir(), "teamcow-release-artifacts-"))
 
@@ -214,6 +236,7 @@ test("release manifest ties artifacts to version, commit, ref, readiness, and ha
     writeFileSync(join(tempDir, "mac-arm64/TeamCow.app/Contents/Info.plist"), "plist")
     writeFileSync(join(tempDir, "TeamCow-0.0.0-arm64.dmg"), "dmg")
     writeFileSync(join(tempDir, "TeamCow-0.0.0-arm64.zip"), "zip")
+    writeFileSync(join(tempDir, "teamcow-release-manifest.json"), "stale manifest")
 
     const manifest = createReleaseManifest({
       releaseDir: tempDir,
@@ -231,6 +254,7 @@ test("release manifest ties artifacts to version, commit, ref, readiness, and ha
     assert.equal(manifest.readiness, "unsigned-local-artifact")
     assert.equal(manifest.artifacts.length, 2)
     assert.equal(manifest.artifacts.some((artifact) => artifact.path.endsWith(".app")), false)
+    assert.equal(manifest.artifacts.some((artifact) => artifact.path === "teamcow-release-manifest.json"), false)
     assert.match(manifest.artifacts[0].sha256, /^[a-f0-9]{64}$/)
   } finally {
     rmSync(tempDir, { recursive: true, force: true })
