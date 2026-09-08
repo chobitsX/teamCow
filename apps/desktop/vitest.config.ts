@@ -14,6 +14,8 @@ export default defineConfig({
   test: {
     // Integration tests spawn Git and provider processes; bound contention on shared CI runners.
     maxWorkers: process.env.CI ? 2 : undefined,
+    // Real Git and filesystem integration operations need extra time on hosted runners.
+    testTimeout: process.env.CI ? 15_000 : 5_000,
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/renderer/test/setup.ts"]
