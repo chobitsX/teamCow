@@ -1,71 +1,68 @@
 <p align="center">
-  <img src="apps/desktop/src/renderer/assets/brand/teamcow-logo-rounded.png" width="112" alt="TeamCow logo">
+  <img src="apps/desktop/src/renderer/assets/brand/teamcow-logo-rounded.png" width="80" alt="TeamCow logo">
 </p>
 
 <h1 align="center">TeamCow</h1>
 
 <p align="center">
-  <strong>你的 coding agent，原生能力，一个更好用的工作台。</strong>
+  <strong>为 Codex、Claude Code、OpenCode 和 Cursor Agent 打造的 macOS 桌面工作台。</strong>
 </p>
 
 <p align="center">
-  把本机已经安装并完成认证的 Codex、Claude Code、OpenCode 和 Cursor Agent<br>
-  带进一个本地优先、对话优先的 macOS 桌面工作台。
+  沿用已有 CLI 登录，用独立 Git worktree 并行处理任务，<br>
+  在同一个本地优先的 AI 编程工作台里查看对话与代码改动。
 </p>
 
 <p align="center">
-  <img alt="Verified on macOS" src="https://img.shields.io/badge/verified-macOS-20232a?logo=apple&logoColor=white">
+  <a href="https://github.com/chobitsX/teamCow/releases/download/v0.0.3/TeamCow-0.0.3-arm64.dmg"><img alt="下载 TeamCow macOS 版 — Apple Silicon" src="https://img.shields.io/badge/下载_macOS_版-Apple_Silicon-315b7d?style=for-the-badge&logo=apple&logoColor=white"></a>
+</p>
+
+<p align="center">
+  v0.0.3 预览版 · Developer ID 签名 · 已通过 Apple 公证<br>
+  <a href="#快速上手">快速上手</a> · <a href="https://github.com/chobitsX/teamCow/releases/tag/v0.0.3">更新说明</a> · <a href="README.md">English</a>
+</p>
+
+<p align="center">
   <img alt="Local first" src="https://img.shields.io/badge/data-local--first-315b7d">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-d6c7a1"></a>
-  <img alt="Node.js 22" src="https://img.shields.io/badge/Node.js-22.22.2-47705b?logo=node.js&logoColor=white">
 </p>
 
-<p align="center">
-  中文 · <a href="README.md">English</a>
-</p>
+![为什么需要 TeamCow：沿用本机 CLI 登录，用 Git worktree 隔离并行任务，集中审查实际文件改动](docs/assets/teamcow-why-zh.png)
+
+<p align="center"><em>使用 AI 生成的工作流概念介绍图；产品界面见下方工作台预览。</em></p>
+
+## 为什么使用 TeamCow
+
+编程任务散落在多个终端后，很容易忘记哪个 Agent 正在改哪个目录、最后改了什么。TeamCow 用项目与对话组织已有的编程 CLI，让任务、工作目录和输出记录保持关联。
+
+- **继续使用熟悉的工具。** 接入本机已安装的 Codex、Claude Code、OpenCode 或 Cursor Agent，沿用已有登录、模型、工具和权限确认流程，无需注册 TeamCow 账号。
+- **同时推进多个任务。** 给不同对话分配独立 Git worktree，让修 Bug、开发功能和补测试在各自目录中并行执行；汇总代码时再审查和处理合并冲突。
+- **看清 Agent 实际做了什么。** 阅读结构化对话和工具事件，检查文件与 Diff，随时在内置终端接手。对话历史和已接收输出保存在本机，中断后仍可回看。
+
+## 快速上手
+
+准备一台 Apple Silicon Mac、Git，以及至少一个已经安装并登录的编程 CLI。TeamCow 安装包自带运行时；从源码开发 TeamCow 才需要另行准备 Node.js 和 Yarn。所选 CLI 可能有自己的运行要求。
+
+1. **安装 TeamCow。** [下载 macOS DMG](https://github.com/chobitsX/teamCow/releases/download/v0.0.3/TeamCow-0.0.3-arm64.dmg)，打开后将 TeamCow 拖入“应用程序”。
+2. **导入项目。** 打开 TeamCow，选择本机已有的 Git 仓库。TeamCow 会检测可用的 Provider CLI 及其登录状态。
+3. **开始对话。** 选择 Provider 和模型，绑定项目目录或独立 Git worktree，在对话中跟进任务，并在旁边检查代码改动。
+
+`v0.0.3` Apple Silicon（`arm64`）预览版已使用 Developer ID 签名并通过 Apple 公证。Intel Mac、Windows 和 Linux 尚未验证；更新版本目前需要重新下载安装包。
+
+<details>
+<summary>校验下载文件或排查安装问题</summary>
+
+使用[发布页](https://github.com/chobitsX/teamCow/releases/tag/v0.0.3)附带的 `teamcow-release-manifest.json` 核对 DMG 的 SHA-256 校验值。macOS 可以验证 Developer ID 签名和已装订的 Apple 公证票据。
+
+如果 macOS 报告验证失败，请先确认下载来源和校验值，再提交问题。TeamCow 不要求关闭 Gatekeeper、选择“仍要打开”，也不要求移除隔离属性。
+
+</details>
+
+## 工作台预览
 
 ![TeamCow 三栏工作台：Project、Chat 与 Inspector](app-screenshots/main-sanitized-zh.png)
 
 <p align="center"><em>基于当前产品界面生成的脱敏演示图；项目、路径和对话均为示例数据。</em></p>
-
-> [!TIP]
-> 如果 `codex`、`claude`、`opencode` 或 `cursor-agent` 已经能在你的终端正常工作，它就可以接入 TeamCow。无需注册 TeamCow，无需重复填写 API Key，也无需把现有认证迁移到另一套账号系统。
-
-> [!IMPORTANT]
-> TeamCow 目前只在 macOS 上完成构建与功能验证。Windows 和 Linux 版本尚未构建确认，当前不应视为已支持平台。
-
-## 下载 macOS 预览版
-
-请从 GitHub Releases [下载适用于 Apple Silicon 的 TeamCow `v0.0.3`](https://github.com/chobitsX/teamCow/releases/tag/v0.0.3)。macOS Apple Silicon（`arm64`）预览包已使用 Developer ID 证书签名并通过 Apple 公证；Intel Mac、Windows 和 Linux 尚未验证，目前也不提供自动更新。
-
-1. 下载 `TeamCow-0.0.3-arm64.dmg`，并将 TeamCow 拖入“应用程序”。
-2. 正常打开 TeamCow；macOS 可以验证 Developer ID 签名和已装订的 Apple 公证票据。
-3. 使用 Release 附带的 `teamcow-release-manifest.json` 核对 DMG 的 SHA-256 校验值。
-
-如果 macOS 报告无法验证签名或公证，请先确认 DMG 来自本仓库 GitHub Release 且校验值一致，再提交问题。TeamCow 不要求关闭 Gatekeeper、选择“仍要打开”，也不要求通过命令行移除隔离属性。
-
-## TeamCow 是什么
-
-TeamCow 不是新的 AI agent，也不是模型 API 的中转服务。它直接调用本机已有的 provider CLI，让 provider 继续负责模型、工具、认证、权限确认和原生执行；TeamCow 在此基础上增加项目与 Conversation 管理、结构化 Chat、Git worktree 隔离，以及 Files、Changes、Git、Terminal 组成的结果审查工作台。
-
-这意味着统一的桌面体验不需要以替换原生 agent 为代价：你继续使用已经信任的 provider 能力，TeamCow 负责让多 Agent 工作变得更清晰、更可并行，也更容易检查。
-
-## 为什么使用 TeamCow
-
-| 你现在可能遇到的问题 | TeamCow 提供的工作方式 |
-| --- | --- |
-| 多个 Agent 分散在不同终端，项目上下文容易混乱 | 用 `Project → Conversation` 统一组织任务、Provider、Model 和执行目标 |
-| 担心统一工具会把成熟 Agent 换成能力缩水的通用实现 | 直接运行本机原生 CLI，沿用已有模型、工具、认证与权限语义 |
-| 多个 Agent 同时修改同一份代码容易冲突 | 每个 Conversation 可以绑定独立 Git worktree，隔离并行执行 |
-| Agent 表示“已经完成”，但真实改动仍然难以判断 | 在 Files、Changes、Git 和 Terminal 中检查文件、Diff、状态与运行结果 |
-| 终端输出零散，很难回顾工具调用与失败过程 | 将输出归一化为 Chat 消息、推理摘要、工具事件和运行状态 |
-| 不希望额外托管凭据或上传项目工作流数据 | TeamCow 不提供独立登录体系，项目、Conversation 和运行记录保存在本机 |
-
-## 原生 Agent，桌面工作流
-
-![TeamCow 概念工作流：本机 CLI、Conversation、Worktree 与 Diff 审查](docs/assets/teamcow-workflow-concept.png)
-
-<p align="center"><em>概念工作流：本机 CLI 接入 TeamCow，在隔离 worktree 中并行工作，并在合并前审查真实改动。</em></p>
 
 TeamCow 的核心模型保持简单：
 
@@ -105,9 +102,9 @@ Project
 
 如果 Provider 尚未安装、未认证或配置无效，TeamCow 会显示不可用原因，并让认证继续在 Provider 原生工具中完成。
 
-## 快速开始
+## 从源码开发
 
-### 环境要求
+### 构建环境要求
 
 - macOS（当前唯一完成构建与功能验证的平台）
 - Node.js `22.22.2`（见 `.node-version` 和 `.nvmrc`）

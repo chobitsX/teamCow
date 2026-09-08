@@ -1,71 +1,68 @@
 <p align="center">
-  <img src="apps/desktop/src/renderer/assets/brand/teamcow-logo-rounded.png" width="112" alt="TeamCow logo">
+  <img src="apps/desktop/src/renderer/assets/brand/teamcow-logo-rounded.png" width="80" alt="TeamCow logo">
 </p>
 
 <h1 align="center">TeamCow</h1>
 
 <p align="center">
-  <strong>Your coding agents. Their native power. One better workspace.</strong>
+  <strong>A macOS desktop GUI for Codex, Claude Code, OpenCode, and Cursor Agent.</strong>
 </p>
 
 <p align="center">
-  Bring the Codex, Claude Code, OpenCode, and Cursor Agent CLIs already installed<br>
-  and authenticated on your Mac into one local-first, chat-first desktop workspace.
+  Reuse your CLI logins, run tasks in isolated Git worktrees,<br>
+  and review code changes in one local-first AI coding workspace.
 </p>
 
 <p align="center">
-  <img alt="Verified on macOS" src="https://img.shields.io/badge/verified-macOS-20232a?logo=apple&logoColor=white">
+  <a href="https://github.com/chobitsX/teamCow/releases/download/v0.0.3/TeamCow-0.0.3-arm64.dmg"><img alt="Download TeamCow for macOS — Apple Silicon" src="https://img.shields.io/badge/Download_for_macOS-Apple_Silicon-315b7d?style=for-the-badge&logo=apple&logoColor=white"></a>
+</p>
+
+<p align="center">
+  v0.0.3 preview · Developer ID signed · Apple notarized<br>
+  <a href="#get-started">Get started</a> · <a href="https://github.com/chobitsX/teamCow/releases/tag/v0.0.3">Release notes</a> · <a href="README.zh-CN.md">中文</a>
+</p>
+
+<p align="center">
   <img alt="Local first" src="https://img.shields.io/badge/data-local--first-315b7d">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-d6c7a1"></a>
-  <img alt="Node.js 22" src="https://img.shields.io/badge/Node.js-22.22.2-47705b?logo=node.js&logoColor=white">
 </p>
 
-<p align="center">
-  <a href="README.zh-CN.md">中文</a> · English
-</p>
+![Why TeamCow: reuse native CLI logins, isolate parallel tasks in Git worktrees, and review actual file changes](docs/assets/teamcow-why-en.png)
+
+<p align="center"><em>AI-generated concept illustration of the workflow. See the workspace preview below for the interface.</em></p>
+
+## Why TeamCow?
+
+When coding tasks spread across terminals, it gets harder to track which agent is working where and what it changed. TeamCow organizes your existing coding CLIs into projects and conversations, with the task, its working directory, and its output kept together.
+
+- **Keep the tools you already use.** Connect your installed Codex, Claude Code, OpenCode, or Cursor Agent CLI with its existing login, models, tools, and permission prompts. There is no TeamCow account to create.
+- **Move several tasks forward.** Give each conversation its own Git worktree so a bug fix, a feature, and a test task can run in separate working directories. Review and reconcile changes when you bring them together.
+- **See what actually changed.** Read structured chat and tool events, inspect files and diffs, and take over in the built-in terminal. Conversation history and received output stay available locally after an interruption.
+
+## Get started
+
+You need an Apple Silicon Mac, Git, and at least one supported coding CLI installed and authenticated. The TeamCow installer includes its own runtime; Node.js and Yarn are only needed for TeamCow source development. Your chosen CLI may have its own requirements.
+
+1. **Install TeamCow.** [Download the macOS DMG](https://github.com/chobitsX/teamCow/releases/download/v0.0.3/TeamCow-0.0.3-arm64.dmg), open it, and drag TeamCow to `Applications`.
+2. **Bring a project.** Open TeamCow and import an existing local Git repository. TeamCow detects your available provider CLIs and their login state.
+3. **Start a conversation.** Choose a provider and model, then use the project directory or an isolated Git worktree. Follow the task in chat and inspect its changes alongside it.
+
+The `v0.0.3` Apple Silicon (`arm64`) preview is signed with Developer ID and notarized by Apple. Intel Macs, Windows, and Linux have not been validated. Updates currently require downloading a new release.
+
+<details>
+<summary>Verify your download or troubleshoot installation</summary>
+
+Compare the DMG's SHA-256 checksum with `teamcow-release-manifest.json` on the [release page](https://github.com/chobitsX/teamCow/releases/tag/v0.0.3). macOS can verify both the Developer ID signature and the stapled Apple notarization ticket.
+
+If macOS reports a verification problem, confirm the download source and checksum before reporting it. TeamCow does not require disabling Gatekeeper, choosing **Open Anyway**, or removing quarantine attributes.
+
+</details>
+
+## Inside the workspace
 
 ![The TeamCow three-column workspace: projects, chat, and inspector](app-screenshots/main-sanitized-en.png)
 
 <p align="center"><em>Sanitized product visual based on the current TeamCow interface. Projects, paths, and conversations contain demo data.</em></p>
-
-> [!TIP]
-> If `codex`, `claude`, `opencode`, or `cursor-agent` already works in your terminal, it can work in TeamCow. There is no TeamCow account to create, no API key to enter again, and no provider authentication to migrate.
-
-> [!IMPORTANT]
-> TeamCow has currently been built and functionally verified only on macOS. Windows and Linux builds have not yet been validated and should not be considered supported platforms.
-
-## Download the macOS preview
-
-[Download TeamCow `v0.0.3` for Apple Silicon](https://github.com/chobitsX/teamCow/releases/tag/v0.0.3) from GitHub Releases. The macOS Apple Silicon (`arm64`) preview is signed with a Developer ID certificate and notarized by Apple. Intel Macs, Windows, and Linux have not been validated, and automatic updates are not yet available.
-
-1. Download `TeamCow-0.0.3-arm64.dmg` and drag TeamCow to `Applications`.
-2. Open TeamCow normally. macOS can verify both the Developer ID signature and the stapled Apple notarization ticket.
-3. Compare the DMG's SHA-256 checksum with `teamcow-release-manifest.json` attached to the release.
-
-If macOS reports that the signature or notarization cannot be verified, confirm that the DMG came from this repository's GitHub Release and that its checksum matches before reporting the problem. TeamCow does not require disabling Gatekeeper, choosing **Open Anyway**, or removing quarantine attributes from the command line.
-
-## What is TeamCow?
-
-TeamCow is not another AI agent and it is not a model API proxy. It invokes provider CLIs already available on your Mac, leaving models, tools, authentication, permission prompts, and native execution to the provider. TeamCow adds project and conversation management, structured chat, Git worktree isolation, and a review workspace built around Files, Changes, Git, and Terminal.
-
-That means a consistent desktop experience does not require replacing the agents you already trust. Providers keep doing the agent work; TeamCow makes multi-agent work easier to organize, run in parallel, and verify.
-
-## Why TeamCow?
-
-| What gets difficult today | What TeamCow adds |
-| --- | --- |
-| Agents are scattered across terminals and project context becomes hard to follow | A `Project → Conversation` workflow that binds each task to its provider, model, and execution target |
-| A unified tool might replace mature agents with a reduced generic implementation | Native local CLIs keep their existing models, tools, authentication, and permission semantics |
-| Multiple agents editing one checkout can conflict | Each conversation can use an isolated Git worktree for parallel execution |
-| An agent says it is done, but the actual result is difficult to judge | Files, Changes, Git, and Terminal reveal the real files, diffs, state, and execution result |
-| Raw terminal output is fragmented and hard to revisit | Provider output becomes chat messages, reasoning summaries, tool events, and run states |
-| You do not want another service holding credentials or workflow data | TeamCow has no separate sign-in system and keeps projects, conversations, and run history local |
-
-## Native agents, desktop workflow
-
-![TeamCow conceptual workflow: local CLIs, conversations, worktrees, and diff review](docs/assets/teamcow-workflow-concept.png)
-
-<p align="center"><em>Conceptual workflow: connect local CLIs, work in isolated worktrees, and review real changes before merging.</em></p>
 
 TeamCow keeps the product model intentionally simple:
 
@@ -105,9 +102,9 @@ Install and authenticate at least one provider through its native CLI first. Tea
 
 If a provider is missing, unauthenticated, or misconfigured, TeamCow reports the reason and leaves authentication in the provider's native tooling.
 
-## Quick start
+## Develop from source
 
-### Requirements
+### Build requirements
 
 - macOS, currently the only platform with a verified build and functional testing
 - Node.js `22.22.2` (`.node-version` and `.nvmrc`)
