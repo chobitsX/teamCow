@@ -12,6 +12,8 @@ export default defineConfig({
     }
   },
   test: {
+    // Integration tests spawn Git and provider processes; bound contention on shared CI runners.
+    maxWorkers: process.env.CI ? 2 : undefined,
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/renderer/test/setup.ts"]

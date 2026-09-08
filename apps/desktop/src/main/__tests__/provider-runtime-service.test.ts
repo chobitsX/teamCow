@@ -9,6 +9,10 @@ import type { CursorAcpRunInput } from "../services/cursor-acp-client"
 
 const createTempDir = (prefix: string) => mkdtempSync(join(tmpdir(), prefix))
 
+// Match each shell fixture to an explicitly selected shell, independent of the CI runner.
+const fixtureShell = process.platform === "darwin" ? "/bin/zsh" : "/bin/bash"
+const fixtureShellProfile = process.platform === "darwin" ? ".zshrc" : ".bash_profile"
+
 const writeFakeCodexAppServer = (
   commandPath: string,
   options: { startDelayMs?: number; completionDelayMs?: number } = {}
@@ -243,14 +247,14 @@ describe("createProviderRuntimeService", () => {
     const shellOnlyBin = join(homeDir, "shell-only-bin")
     mkdirSync(shellOnlyBin, { recursive: true })
     symlinkSync(process.execPath, join(shellOnlyBin, "node"))
-    writeFileSync(join(homeDir, ".zshrc"), `sleep 0.3\nexport PATH="${shellOnlyBin}:$PATH"\n`)
+    writeFileSync(join(homeDir, fixtureShellProfile), `sleep 0.3\nexport PATH="${shellOnlyBin}:$PATH"\n`)
     const commandPath = join(shellOnlyBin, "fake-codex")
 
     try {
       writeFakeCodexAppServer(commandPath)
 
       const service = createProviderRuntimeService({
-        env: { PATH: "/usr/bin:/bin" },
+        env: { PATH: "/usr/bin:/bin", SHELL: fixtureShell },
         homeDir,
         providers: [
           {
@@ -1040,7 +1044,7 @@ describe("createProviderRuntimeService", () => {
     const homeDir = createTempDir("teamcow-provider-home-")
     const shellOnlyBin = join(homeDir, "shell-only-bin")
     mkdirSync(shellOnlyBin, { recursive: true })
-    writeFileSync(join(homeDir, ".zshrc"), `export PATH="${shellOnlyBin}:$PATH"\n`)
+    writeFileSync(join(homeDir, fixtureShellProfile), `export PATH="${shellOnlyBin}:$PATH"\n`)
     const binaryPath = join(shellOnlyBin, "fake-provider")
     writeFileSync(binaryPath, "#!/bin/sh\necho 'fake-provider 1.2.3'\n")
     chmodSync(binaryPath, 0o755)
@@ -1050,6 +1054,7 @@ describe("createProviderRuntimeService", () => {
         now: () => "2026-05-24T09:30:00.000Z",
         env: {
           PATH: "/usr/bin:/bin",
+          SHELL: fixtureShell,
           FAKE_PROVIDER_API_KEY: "configured"
         },
         homeDir,
@@ -1081,7 +1086,7 @@ describe("createProviderRuntimeService", () => {
     const homeDir = createTempDir("teamcow-provider-node-home-")
     const shellOnlyBin = join(homeDir, "shell-only-bin")
     mkdirSync(shellOnlyBin, { recursive: true })
-    writeFileSync(join(homeDir, ".zshrc"), `export PATH="${shellOnlyBin}:$PATH"\n`)
+    writeFileSync(join(homeDir, fixtureShellProfile), `export PATH="${shellOnlyBin}:$PATH"\n`)
     symlinkSync(process.execPath, join(shellOnlyBin, "node"))
     const binaryPath = join(shellOnlyBin, "fake-provider")
     writeFileSync(binaryPath, "#!/usr/bin/env node\nconsole.log('fake-provider 1.2.3')\n")
@@ -1092,6 +1097,7 @@ describe("createProviderRuntimeService", () => {
         now: () => "2026-05-24T09:31:00.000Z",
         env: {
           PATH: "/usr/bin:/bin",
+          SHELL: fixtureShell,
           FAKE_PROVIDER_API_KEY: "configured"
         },
         homeDir,
@@ -1124,7 +1130,7 @@ describe("createProviderRuntimeService", () => {
     const shellOnlyBin = join(homeDir, "shell-only-bin")
     mkdirSync(shellOnlyBin, { recursive: true })
     writeFileSync(
-      join(homeDir, ".zshrc"),
+      join(homeDir, fixtureShellProfile),
       [
         "echo 'shell startup banner'",
         `export PATH="${shellOnlyBin}:$PATH"`,
@@ -1140,6 +1146,7 @@ describe("createProviderRuntimeService", () => {
         now: () => "2026-05-24T09:32:00.000Z",
         env: {
           PATH: "/usr/bin:/bin",
+          SHELL: fixtureShell,
           FAKE_PROVIDER_API_KEY: "configured"
         },
         homeDir,

@@ -61,7 +61,8 @@ jobs:
       - run: yarn i18n:check
 
   test:
-    runs-on: ubuntu-latest
+    # V1 integration tests exercise macOS terminal behavior and native file helpers.
+    runs-on: macos-latest
     needs: install
     steps:
       - uses: actions/checkout@v4
