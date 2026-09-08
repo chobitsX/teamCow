@@ -20,6 +20,8 @@ jobs:
           cache: yarn
       - run: corepack enable
       - run: yarn install --frozen-lockfile
+      # Warm native helpers before the release script runs its timed integration tests.
+      - run: yarn workspace @teamcow/desktop build:native
       - run: yarn release:desktop
       - uses: actions/upload-artifact@v4
         with:

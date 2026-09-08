@@ -72,6 +72,8 @@ jobs:
           cache: yarn
       - run: corepack enable
       - run: yarn install --frozen-lockfile
+      # Compile helpers before timed tests; a fresh Xcode SDK can exceed Vitest's first-test timeout.
+      - run: yarn workspace @teamcow/desktop build:native
       - run: yarn ci:test
 
   desktop-smoke:
