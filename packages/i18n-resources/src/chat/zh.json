@@ -72,6 +72,8 @@
   "composer.attachment.error.total-too-large": "附件总大小不能超过 {{limit}} MB。",
   "composer.attachment.error.read": "无法读取所选附件，请检查文件权限后重试。",
   "image.preview.open": "预览图片 {{name}}",
+  "image.generated": "生成的图片",
+  "image.unavailable": "无法加载生成的图片，文件可能已丢失或无法读取。",
   "image.preview.close": "关闭图片预览",
   "image.preview.controls": "图片缩放控件",
   "image.preview.zoom-in": "放大",

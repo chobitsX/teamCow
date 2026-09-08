@@ -1837,6 +1837,38 @@ button:disabled {
   white-space: nowrap;
 }
 
+.generated-image .chat-message-attachment.image {
+  width: 480px;
+}
+
+.generated-image .chat-message-attachment__preview-button {
+  aspect-ratio: auto;
+  min-height: 120px;
+}
+
+.generated-image .chat-message-attachment.image img {
+  height: auto;
+  max-height: 400px;
+}
+
+.chat-markdown-image {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--bg-surface);
+  cursor: zoom-in;
+}
+
+.chat-markdown-image img {
+  display: block;
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+}
+
 .chat-message-attachment.file {
   display: flex;
   align-items: center;

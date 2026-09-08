@@ -36,9 +36,9 @@
 
 ## 下载 macOS 预览版
 
-请从 GitHub Releases [下载适用于 Apple Silicon 的 TeamCow `v0.0.2`](https://github.com/chobitsX/teamCow/releases/tag/v0.0.2)。macOS Apple Silicon（`arm64`）预览包已使用 Developer ID 证书签名并通过 Apple 公证；Intel Mac、Windows 和 Linux 尚未验证，目前也不提供自动更新。
+请从 GitHub Releases [下载适用于 Apple Silicon 的 TeamCow `v0.0.3`](https://github.com/chobitsX/teamCow/releases/tag/v0.0.3)。macOS Apple Silicon（`arm64`）预览包已使用 Developer ID 证书签名并通过 Apple 公证；Intel Mac、Windows 和 Linux 尚未验证，目前也不提供自动更新。
 
-1. 下载 `TeamCow-0.0.2-arm64.dmg`，并将 TeamCow 拖入“应用程序”。
+1. 下载 `TeamCow-0.0.3-arm64.dmg`，并将 TeamCow 拖入“应用程序”。
 2. 正常打开 TeamCow；macOS 可以验证 Developer ID 签名和已装订的 Apple 公证票据。
 3. 使用 Release 附带的 `teamcow-release-manifest.json` 核对 DMG 的 SHA-256 校验值。
 
@@ -138,7 +138,7 @@ yarn workspace @teamcow/desktop smoke
 
 ## 产品状态
 
-TeamCow 当前处于早期版本（`0.0.2`），以 macOS 开发者试用为主。核心 Project、Conversation、Provider、Worktree、Chat 与 Inspector 工作流已经可用。macOS 预览包已使用 Developer ID 正式签名并通过 Apple 公证；自动更新源尚未开放。Windows 和 Linux 版本尚未进行构建与功能验证。
+TeamCow 当前处于早期版本（`0.0.3`），以 macOS 开发者试用为主。核心 Project、Conversation、Provider、Worktree、Chat 与 Inspector 工作流已经可用。macOS 预览包已使用 Developer ID 正式签名并通过 Apple 公证；自动更新源尚未开放。Windows 和 Linux 版本尚未进行构建与功能验证。
 
 本地构建 macOS 安装包：
 

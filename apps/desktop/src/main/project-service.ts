@@ -28,7 +28,7 @@ import {
   realpath as realpathAsync,
   stat as statAsync
 } from "node:fs/promises"
-import { tmpdir } from "node:os"
+import { homedir, tmpdir } from "node:os"
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path"
 import { createHash, randomUUID } from "node:crypto"
 import { spawnSync } from "node:child_process"
@@ -55,6 +55,9 @@ import { createGitProcessRunner } from "./services/git-process-runner"
 import type { LoggingService } from "./services/logging-service"
 import { recoverInterruptedRuns } from "./services/run-recovery-service"
 import { createRunEventStore } from "./services/run-event-store"
+import { compactGeneratedImagePayload, generatedImageId, readGeneratedImageSource, storeGeneratedImage } from "./services/generated-image-service"
+import { providerImageSourceSchema, readLegacyContentImageSources } from "./services/provider-image-source"
+import { readMarkdownOutputImages, rewriteMarkdownOutputImages } from "./services/markdown-output-images"
 import { createWorktreeGitWatcherService, type WorktreeGitWatcher } from "./services/worktree-git-watcher-service"
 import {
   appContextSnapshotSchema,
@@ -64,6 +67,7 @@ import {
   cancelConversationRunInputSchema,
   cancelConversationRunResultSchema,
   conversationAttachmentSummarySchema,
+  generatedImageSummarySchema,
   conversationMessageSummarySchema,
   CONVERSATION_FILE_AUTOMATIC_OPEN_MAX_BYTES,
   CONVERSATION_FILE_CONFIRMED_OPEN_MAX_BYTES,
@@ -2554,6 +2558,92 @@ export const createProjectService = (deps: ProjectServiceDeps) => {
   const now = deps.now ?? (() => new Date().toISOString())
   const conversationAttachmentRoot = join(deps.userDataPath, CONVERSATION_ATTACHMENT_DIRECTORY)
   const runEventStore = createRunEventStore({ database, now })
+
+  const prepareGeneratedImageEvent = (input: AppendRunEventInput, createdAt = now()): AppendRunEventInput => {
+    const singleSource = readGeneratedImageSource(input.payload)
+    const markdownImages = input.type === "run.message.completed" && typeof input.payload.text === "string"
+      ? readMarkdownOutputImages(input.payload.text) : []
+    const sources = markdownImages.length > 0 ? markdownImages.map((image) => image.source) : singleSource ? [singleSource]
+      : Array.isArray(input.payload.imageSources)
+        ? input.payload.imageSources.flatMap((source) => {
+            const parsed = providerImageSourceSchema.safeParse(source)
+            return parsed.success ? [parsed.data] : []
+          })
+        : input.payload.images ? [] : readLegacyContentImageSources(input.payload)
+    if (sources.length === 0) return input
+    canonicalRunEventSchema.parse({ type: input.type, payload: input.payload, status: input.status })
+    const run = database.db.select().from(executionRunsTable)
+      .where(eq(executionRunsTable.id, input.runId)).get() as ExecutionRunRow | undefined
+    if (!run || run.conversationId !== input.conversationId) {
+      throw new Error(`Run ${input.runId} was not found for conversation ${input.conversationId}`)
+    }
+    const worktree = database.db.select().from(worktreesTable)
+      .where(eq(worktreesTable.id, run.worktreeId)).get() as WorktreeRow | undefined
+    const images = sources.map((source) => {
+      const id = generatedImageId(input.conversationId, input.runId, source.id)
+      const existing = database.db.select().from(artifactsTable)
+        .where(eq(artifactsTable.id, id)).get() as ArtifactRow | undefined
+      const cachedImage = generatedImageSummarySchema.safeParse(existing ? parseJsonRecord(existing.payload).image : null)
+      if (cachedImage.success && cachedImage.data.status === "ready") return cachedImage.data
+      const stored = storeGeneratedImage({
+        source,
+        id,
+        directory: join(conversationAttachmentRoot, input.conversationId, "generated"),
+        uri: createConversationAttachmentUri(input.conversationId, id),
+        worktreeRoot: worktree?.rootPath,
+        allowedSourceRoots: [
+          ...(run.provider === "codex" ? [join(process.env.CODEX_HOME || join(homedir(), ".codex"), "generated_images")] : []),
+          tmpdir(),
+          ...(process.platform === "win32" ? [] : ["/tmp"]),
+          ...(worktree ? [worktree.rootPath] : [])
+        ]
+      })
+      if (stored.image.status === "ready") {
+        database.db.insert(artifactsTable).values({
+          id,
+          conversationId: input.conversationId,
+          runId: input.runId,
+          kind: "image",
+          title: stored.image.attachment.name,
+          uri: stored.image.attachment.uri,
+          payload: JSON.stringify({ image: stored.image, storagePath: stored.storagePath }),
+          createdAt
+        }).onConflictDoNothing().run()
+      }
+      return stored.image
+    })
+    if (markdownImages.length > 0) {
+      const uris = images.map((image, index) => image.status === "ready" ? image.attachment.uri
+        : createConversationAttachmentUri(input.conversationId, generatedImageId(input.conversationId, input.runId, sources[index].id)))
+      return { ...input, payload: { ...input.payload,
+        text: rewriteMarkdownOutputImages(String(input.payload.text), markdownImages, uris) } }
+    }
+    if (!singleSource) {
+      const payload: Record<string, unknown> = { ...input.payload, images }
+      delete payload.imageSources
+      return { ...input, payload }
+    }
+    const payload = compactGeneratedImagePayload(input.payload, images[0])
+    if (images[0].status === "unavailable" && singleSource.savedPath) {
+      // Retain a recovery reference if the provider file becomes available later.
+      payload.imageSource = { id: singleSource.id, savedPath: singleSource.savedPath }
+    }
+    return { ...input, type: "run.artifact.changed", payload }
+  }
+
+  const recoverGeneratedImageEvent = (event: RunEventRow, provider: ProviderKind): RunEventSummary => {
+    const summary = createRunEventSummary(event, provider)
+    const prepared = prepareGeneratedImageEvent(summary, event.createdAt)
+    if (prepared !== summary) {
+      const payload = JSON.stringify(prepared.payload)
+      if (payload !== event.payload || prepared.type !== event.type) {
+        database.db.update(runEventsTable).set({ type: prepared.type, payload })
+          .where(eq(runEventsTable.id, event.id)).run()
+      }
+      return runEventSummarySchema.parse({ ...summary, type: prepared.type, payload: prepared.payload })
+    }
+    return summary
+  }
   const customModelsService = createCustomModelsService({
     store: {
       get: (key: string) => {
@@ -2726,7 +2816,7 @@ export const createProjectService = (deps: ProjectServiceDeps) => {
       }
 
       const [conversationId, attachmentId] = segments
-      const attachment = (database.db
+      let attachment: { storagePath: string; mimeType: string } | undefined = (database.db
         .select()
         .from(conversationMessageAttachmentsTable)
         .where(and(
@@ -2741,6 +2831,18 @@ export const createProjectService = (deps: ProjectServiceDeps) => {
             eq(queuedConversationMessageAttachmentsTable.conversationId, conversationId)
           ))
           .get() as QueuedConversationMessageAttachmentRow | undefined)
+      if (!attachment) {
+        const artifact = database.db.select().from(artifactsTable).where(and(
+          eq(artifactsTable.id, attachmentId),
+          eq(artifactsTable.conversationId, conversationId),
+          eq(artifactsTable.kind, "image")
+        )).get() as ArtifactRow | undefined
+        const payload = artifact ? parseJsonRecord(artifact.payload) : {}
+        const image = generatedImageSummarySchema.safeParse(payload.image)
+        if (image.success && image.data.status === "ready" && typeof payload.storagePath === "string") {
+          attachment = { storagePath: payload.storagePath, mimeType: image.data.attachment.mimeType }
+        }
+      }
       if (!attachment || !existsSync(conversationAttachmentRoot) || !existsSync(attachment.storagePath)) {
         return null
       }
@@ -3396,7 +3498,7 @@ export const createProjectService = (deps: ProjectServiceDeps) => {
       .from(runEventsTable)
       .where(eq(runEventsTable.conversationId, conversationId))
       .all() as RunEventRow[])
-      .map((event) => createRunEventSummary(event, runProvider.get(event.runId) ?? "codex"))
+      .map((event) => recoverGeneratedImageEvent(event, runProvider.get(event.runId) ?? "codex"))
       .sort((left, right) => {
         const leftRunOrder = runOrder.get(left.runId) ?? Number.MAX_SAFE_INTEGER
         const rightRunOrder = runOrder.get(right.runId) ?? Number.MAX_SAFE_INTEGER
@@ -3527,7 +3629,7 @@ export const createProjectService = (deps: ProjectServiceDeps) => {
       ? []
       : (database.db.select().from(runEventsTable)
           .where(inArray(runEventsTable.runId, runIds)).all() as RunEventRow[])
-          .map((event) => createRunEventSummary(event, runProvider.get(event.runId) ?? "codex"))
+          .map((event) => recoverGeneratedImageEvent(event, runProvider.get(event.runId) ?? "codex"))
           .sort((left, right) =>
             (runOrder.get(left.runId) ?? Number.MAX_SAFE_INTEGER) -
               (runOrder.get(right.runId) ?? Number.MAX_SAFE_INTEGER) ||
@@ -8289,7 +8391,7 @@ export const createProjectService = (deps: ProjectServiceDeps) => {
   }
 
   const appendRunEvent = (input: AppendRunEventInput): RunEventSummary => {
-    const result = runEventStore.append(input)
+    const result = runEventStore.append(prepareGeneratedImageEvent(input))
     const nextStatus = result.nextStatus
     const previousWasTerminal = isTerminalRunStatus(result.previousStatus)
     const nextIsTerminal = nextStatus ? isTerminalRunStatus(nextStatus) : false

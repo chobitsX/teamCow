@@ -49,6 +49,7 @@ import { ShellLayout } from "./ShellLayout"
 import { ImagePreviewDialog } from "./ImagePreviewDialog"
 import { buildChatRenderItems, type ChatRenderItem, type PermissionRequestRenderItem, type SystemSummaryRenderItem, type ToolEventRenderItem } from "./chat-render-model"
 import { MarkdownMessage } from "./chat/MarkdownMessage"
+import { GeneratedImageMessage } from "./chat/GeneratedImageMessage"
 import { ToolCallCard } from "./chat/ToolCallCard"
 import { VirtualizedChatTimeline } from "./chat/VirtualizedChatTimeline"
 import { readComposerAttachment, type ComposerAttachmentDraft } from "./composer-attachments"
@@ -527,6 +528,7 @@ const providerModelLabelKeyById: Partial<Record<ProviderKind, Record<string, str
 const providerModelDetailKeyById: Partial<Record<ProviderKind, Record<string, string>>> = {
   claude: {
     default: "modelPicker.detail.claude.default",
+    "claude-fable-5-1": "modelPicker.detail.claude.fable-5-1",
     "claude-fable-5": "modelPicker.detail.claude.fable-5",
     "claude-opus-5": "modelPicker.detail.claude.opus-5",
     "claude-opus-4-8": "modelPicker.detail.claude.opus-4-8",
@@ -534,19 +536,28 @@ const providerModelDetailKeyById: Partial<Record<ProviderKind, Record<string, st
     "claude-haiku-4-5": "modelPicker.detail.claude.haiku-4-5"
   },
   codex: {
+    "gpt-6-astra": "modelPicker.detail.codex.gpt-6-astra",
+    "gpt-5.6-sol": "modelPicker.detail.codex.gpt-5-6-sol",
+    "gpt-5.6-terra": "modelPicker.detail.codex.gpt-5-6-terra",
+    "gpt-5.6-luna": "modelPicker.detail.codex.gpt-5-6-luna",
     "gpt-5.5": "modelPicker.detail.codex.gpt-5-5",
-    "gpt-5.4": "modelPicker.detail.codex.gpt-5-4",
-    "gpt-5.4-mini": "modelPicker.detail.codex.gpt-5-4-mini",
-    "gpt-5.3-codex": "modelPicker.detail.codex.gpt-5-3-codex"
+    "gpt-5.3-codex-spark": "modelPicker.detail.codex.gpt-5-3-codex-spark"
   },
   opencode: {
-    "anthropic/claude-sonnet-4-6": "modelPicker.detail.opencode.claude-sonnet-4-6",
-    "anthropic/claude-opus-4-7": "modelPicker.detail.opencode.claude-opus-4-7",
-    "openai/gpt-4.1": "modelPicker.detail.opencode.gpt-4-1",
-    "google/gemini-2.5-pro": "modelPicker.detail.opencode.gemini-2-5-pro"
+    "anthropic/claude-sonnet-5": "modelPicker.detail.opencode.claude-sonnet-5",
+    "anthropic/claude-opus-5": "modelPicker.detail.opencode.claude-opus-5",
+    "anthropic/claude-fable-5-1": "modelPicker.detail.opencode.claude-fable-5-1",
+    "anthropic/claude-haiku-4-5": "modelPicker.detail.opencode.claude-haiku-4-5",
+    "openai/gpt-6-astra": "modelPicker.detail.opencode.gpt-6-astra",
+    "openai/gpt-5.6-sol": "modelPicker.detail.opencode.gpt-5-6-sol",
+    "openai/gpt-5.6-terra": "modelPicker.detail.opencode.gpt-5-6-terra",
+    "openai/gpt-5.6-luna": "modelPicker.detail.opencode.gpt-5-6-luna",
+    "google/gemini-3.8-flash": "modelPicker.detail.opencode.gemini-3-8-flash",
+    "google/gemini-3.1-pro-preview": "modelPicker.detail.opencode.gemini-3-1-pro-preview"
   },
   cursor: {
     auto: "modelPicker.detail.cursor.auto",
+    "cursor-grok-4.6-high": "modelPicker.detail.cursor.grok-4-6",
     "composer-2.5": "modelPicker.detail.cursor.composer-2-5"
   }
 }
@@ -804,6 +815,10 @@ const renderChatItem = (
     )
   }
 
+  if (item.kind === "provider-image") {
+    return <GeneratedImageMessage key={item.id} image={item.image} onPreview={onPreviewImage} />
+  }
+
   if (item.kind === "provider-message") {
     return (
       <article
@@ -819,7 +834,7 @@ const renderChatItem = (
             {tChat(item.phase === "final" ? "render.final-answer" : "render.live-response")}
           </span>
         </div>
-        <MarkdownMessage content={item.content} />
+        <MarkdownMessage content={item.content} onPreviewImage={onPreviewImage} />
       </article>
     )
   }
@@ -847,12 +862,12 @@ const renderChatItem = (
             <ol className="chat-provider-context-steps">
               {item.entries.map((entry, index) => (
                 <li key={`${item.id}-${index}`}>
-                  <MarkdownMessage content={entry} />
+                  <MarkdownMessage content={entry} onPreviewImage={onPreviewImage} />
                 </li>
               ))}
             </ol>
           ) : (
-            <MarkdownMessage content={item.content} />
+            <MarkdownMessage content={item.content} onPreviewImage={onPreviewImage} />
           )}
         </div>
       </details>

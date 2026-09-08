@@ -53,6 +53,33 @@ const timeline = (overrides: Partial<ConversationTimeline>): ConversationTimelin
 })
 
 describe("buildChatRenderItems", () => {
+  it.each(["codex", "claude", "cursor", "opencode"])("renders %s tool images once while retaining tool output", (provider) => {
+    const images = ["image-1", "image-2"].map((id) => ({ status: "ready", attachment: {
+      id, kind: "image", name: `${id}.png`, mimeType: "image/png", sizeBytes: 100,
+      uri: `teamcow-attachment://conversation/conversation-1/${id}`
+    } }))
+    const items = buildChatRenderItems(timeline({ runs: [run("run-1", "completed")], events: [
+      event("tools", "run-1", 1, "run.tool.completed", { provider, images, toolName: "generate_image", output: "Saved two images" }),
+      event("replayed-tools", "run-1", 2, "run.tool.completed", { provider, images, toolName: "generate_image", output: "Saved two images" }),
+      event("completed", "run-1", 3, "run.completed", {})
+    ] }))
+    expect(items.filter((item) => item.kind === "provider-image")).toHaveLength(2)
+    expect(items.some((item) => item.kind === "tool-event" || item.kind === "raw-fallback")).toBe(true)
+  })
+
+  it("renders generated image events in order without reporting an image-only turn as empty", () => {
+    const image = { status: "ready", attachment: { id: "image-1", kind: "image", name: "lotus.png", mimeType: "image/png", sizeBytes: 128,
+      uri: "teamcow-attachment://conversation/conversation-1/image-1" } }
+    const items = buildChatRenderItems(timeline({ runs: [run("run-1", "completed")], events: [
+      event("image-event", "run-1", 1, "run.artifact.changed", { contentType: "imageGeneration", image }),
+      event("completed", "run-1", 2, "run.completed", {})
+    ] }))
+    expect(items.filter((item) => item.kind === "provider-image")).toEqual([
+      expect.objectContaining({ id: "image-event", image })
+    ])
+    expect(items.some((item) => item.kind === "run-outcome")).toBe(false)
+  })
+
   it("maps timeline messages and normalized run events into stable chat render items", () => {
     const items = buildChatRenderItems(timeline({
       messages: [

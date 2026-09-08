@@ -9281,6 +9281,36 @@ describe("DesktopShell", () => {
     container.remove()
   })
 
+  it("previews generated images and shows a readable error if their file cannot load", async () => {
+    const uri = "teamcow-attachment://conversation/conversation-2/generated-image-1"
+    window.teamcow.getAppContext = vi.fn(async () => selectionContext)
+    window.teamcow.getConversationTimeline = vi.fn(async (conversationId: string): Promise<GetConversationTimelineResult> => {
+      const timeline = timelineWithUserMessage(conversationId, "Generate a lotus garden", "completed")
+      return { status: "ok", timeline: { ...timeline, events: [...timeline.events, {
+        id: "generated-image-event", conversationId, runId: timeline.runs[0].id, sequence: 20,
+        type: "run.artifact.changed", createdAt: "2026-05-20T12:00:00.000Z",
+        payload: { contentType: "imageGeneration", image: { status: "ready", attachment: {
+          id: "generated-image-1", kind: "image", name: "lotus.png", mimeType: "image/png", sizeBytes: 128, uri
+        } } }
+      }] } }
+    })
+    const container = document.createElement("div")
+    document.body.appendChild(container)
+    const root = await renderWithI18n(container, <DesktopShell />)
+    await settle()
+    expect(getByTestId(container, "chat-provider-image")?.textContent).toContain("Generated image")
+    await clickElement(getByTestId(container, "chat-image-preview-trigger"))
+    expect(getByTestId(container, "image-preview-image")?.getAttribute("src")).toBe(uri)
+    await clickElement(getByTestId(container, "image-preview-backdrop"))
+    await act(async () => {
+      getByTestId(container, "chat-provider-image")?.querySelector("img")?.dispatchEvent(new Event("error"))
+    })
+    expect(getByTestId(container, "chat-provider-image")?.textContent).toContain("The generated image could not be loaded")
+    expect(getByTestId(container, "chat-image-preview-trigger")).toBeFalsy()
+    await act(async () => { root.unmount() })
+    container.remove()
+  })
+
   it("opens sent images in a dismissible full-size preview", async () => {
     window.teamcow.getAppContext = vi.fn(async () => selectionContext)
     window.teamcow.getConversationTimeline = vi.fn(async (conversationId: string): Promise<GetConversationTimelineResult> => {

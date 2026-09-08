@@ -1797,6 +1797,7 @@ describe("createProviderRuntimeService", () => {
 
     const modelValues = [
       "default",
+      "claude-fable-5-1",
       "claude-fable-5",
       "claude-opus-5",
       "claude-opus-4-8",
@@ -2204,6 +2205,28 @@ describe("createProviderRuntimeService", () => {
       phase: "final",
       authoritative: true,
       text: "All done"
+    })
+  })
+
+  it("normalizes Codex image generation with original bytes and a stable native event id", async () => {
+    const imageData = "a".repeat(2000)
+    const streamedEvents: Array<{ type: string; payload: Record<string, unknown> }> = []
+    const service = createProviderRuntimeService({
+      providers: [{ kind: "codex", command: "codex", minimumVersion: "1.0.0" }],
+      runCodexAppServer: async (input) => {
+        await input.onNotification?.({ method: "item/completed", params: {
+          item: { type: "imageGeneration", id: "image-native-1", status: "completed", savedPath: "/tmp/image.png", result: imageData }
+        } })
+        return { threadId: "thread-1", turnId: "turn-1", status: "completed", stderr: "" }
+      }
+    })
+    await service.runProvider({ provider: "codex", model: "gpt-6-astra", prompt: "Generate an image",
+      worktreeRootPath: "/tmp/worktree", worktreeId: "worktree-1", conversationId: "conversation-1", runId: "run-1",
+      onEvent: (event) => { streamedEvents.push(event) }
+    })
+    expect(streamedEvents.find((event) => event.type === "run.artifact.changed")?.payload).toMatchObject({
+      contentType: "imageGeneration", phase: "completed", providerEventId: "item/completed:image-native-1",
+      imageSource: { id: "image-native-1", savedPath: "/tmp/image.png", result: imageData }
     })
   })
 
@@ -3145,7 +3168,7 @@ describe("createProviderRuntimeService", () => {
 
       const models = await service.listProviderModels("opencode")
 
-      expect(runCommand).toHaveBeenCalledWith("opencode", ["models"])
+      expect(runCommand).toHaveBeenCalledWith("opencode", ["models", "--refresh"])
       expect(models.map((model) => model.id)).toEqual([
         "opencode/big-pickle",
         "opencode/deepseek-v4-flash-free",

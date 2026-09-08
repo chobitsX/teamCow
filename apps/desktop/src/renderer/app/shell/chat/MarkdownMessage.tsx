@@ -1,9 +1,10 @@
 import { Children, isValidElement, memo, type ReactNode } from "react"
-import ReactMarkdown from "react-markdown"
+import ReactMarkdown, { defaultUrlTransform } from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
 import remarkGfm from "remark-gfm"
 import { MermaidDiagram } from "./MermaidDiagram"
 import { looksLikeMermaidSource } from "./mermaid-source"
+import { MarkdownImage } from "./MarkdownImage"
 
 type CodeElementProps = {
   className?: string
@@ -17,12 +18,18 @@ const getCodeText = (children: ReactNode): string =>
     .map((child) => (typeof child === "string" || typeof child === "number" ? child : ""))
     .join("")
 
-export const MarkdownMessage = memo(({ content }: { content: string }) => (
+export const MarkdownMessage = memo(({ content, onPreviewImage }: {
+  content: string
+  onPreviewImage?: (target: { src: string; name: string }) => void
+}) => (
   <div className="markdown-message">
     <ReactMarkdown
       rehypePlugins={[rehypeHighlight]}
       remarkPlugins={[remarkGfm]}
+      urlTransform={(url, key) => key === "src" && /^teamcow-attachment:\/\/conversation\/[^/]+\/[^/]+$/.test(url)
+        ? url : defaultUrlTransform(url)}
       components={{
+        img: ({ src, alt }) => <MarkdownImage src={typeof src === "string" ? src : undefined} alt={alt} onPreview={onPreviewImage} />,
         a: ({ href, children, ...props }) => (
           <a {...props} href={href} rel="noreferrer noopener" target="_blank">
             {children}

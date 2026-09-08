@@ -325,6 +325,8 @@ export const providerModelOptionSchema = z.object({
 })
 export type ProviderModelOption = z.infer<typeof providerModelOptionSchema>
 
+// Curated offline defaults, verified 2026-09-07. Native CLI discovery remains authoritative.
+// Sources and provider-specific retirement rules: docs/provider-model-catalog.md.
 export const PROVIDER_MODEL_CATALOG: Record<ProviderKind, ProviderModelOption[]> = {
   claude: [
     {
@@ -332,6 +334,11 @@ export const PROVIDER_MODEL_CATALOG: Record<ProviderKind, ProviderModelOption[]>
       label: "Auto",
       detail: "Follow the recommended Claude Code model for this account.",
       isDefault: true
+    },
+    {
+      id: "claude-fable-5-1",
+      label: "Fable 5.1",
+      detail: "Claude Fable 5.1 for demanding reasoning and long-running coding tasks. Requires Claude Code 2.1.255+."
     },
     {
       id: "claude-fable-5",
@@ -360,25 +367,33 @@ export const PROVIDER_MODEL_CATALOG: Record<ProviderKind, ProviderModelOption[]>
     }
   ],
   codex: [
-    { id: "gpt-5.5", label: "GPT-5.5", detail: "Flagship model for complex coding and reasoning.", isDefault: true },
-    { id: "gpt-5.4", label: "GPT-5.4", detail: "Strong reasoning for professional coding." },
-    { id: "gpt-5.4-mini", label: "GPT-5.4 Mini", detail: "Fast lightweight model for iteration and subagents." },
-    { id: "gpt-5.3-codex", label: "GPT-5.3 Codex", detail: "Specialized software engineering model." }
+    { id: "gpt-6-astra", label: "GPT-6 Astra", detail: "Advanced reasoning for the most demanding coding tasks.", isDefault: true },
+    { id: "gpt-5.6-sol", label: "GPT-5.6 Sol", detail: "Capable GPT-5.6 model for complex coding and agentic work." },
+    { id: "gpt-5.6-terra", label: "GPT-5.6 Terra", detail: "Balanced model for everyday coding tasks." },
+    { id: "gpt-5.6-luna", label: "GPT-5.6 Luna", detail: "Fast lightweight model for iteration and simple tasks." },
+    { id: "gpt-5.5", label: "GPT-5.5", detail: "Previous-generation model for complex coding and reasoning." },
+    { id: "gpt-5.3-codex-spark", label: "GPT-5.3 Codex Spark", detail: "Near-instant coding research preview for ChatGPT Pro accounts." }
   ],
   opencode: [
     {
-      id: "anthropic/claude-sonnet-4-6",
-      label: "Claude Sonnet 4.6",
+      id: "anthropic/claude-sonnet-5",
+      label: "Claude Sonnet 5",
       detail: "Anthropic everyday coding model.",
       isDefault: true
     },
     {
-      id: "anthropic/claude-opus-4-7",
-      label: "Claude Opus 4.7",
+      id: "anthropic/claude-opus-5",
+      label: "Claude Opus 5",
       detail: "Anthropic high-reasoning model."
     },
-    { id: "openai/gpt-4.1", label: "GPT-4.1", detail: "OpenAI general coding model." },
-    { id: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro", detail: "Google reasoning model." }
+    { id: "anthropic/claude-fable-5-1", label: "Claude Fable 5.1", detail: "Anthropic model for demanding long-running coding tasks." },
+    { id: "anthropic/claude-haiku-4-5", label: "Claude Haiku 4.5", detail: "Anthropic lightweight model for fast tasks." },
+    { id: "openai/gpt-6-astra", label: "GPT-6 Astra", detail: "OpenAI advanced reasoning model for demanding coding tasks." },
+    { id: "openai/gpt-5.6-sol", label: "GPT-5.6 Sol", detail: "OpenAI model for complex coding and agentic work." },
+    { id: "openai/gpt-5.6-terra", label: "GPT-5.6 Terra", detail: "OpenAI balanced model for everyday coding." },
+    { id: "openai/gpt-5.6-luna", label: "GPT-5.6 Luna", detail: "OpenAI fast lightweight coding model." },
+    { id: "google/gemini-3.8-flash", label: "Gemini 3.8 Flash", detail: "Google model for software engineering and agentic workflows." },
+    { id: "google/gemini-3.1-pro-preview", label: "Gemini 3.1 Pro Preview", detail: "Google reasoning model, available in preview." }
   ],
   cursor: [
     {
@@ -386,6 +401,11 @@ export const PROVIDER_MODEL_CATALOG: Record<ProviderKind, ProviderModelOption[]>
       label: "Auto",
       detail: "Follow the recommended Cursor model for this account.",
       isDefault: true
+    },
+    {
+      id: "cursor-grok-4.6-high",
+      label: "Cursor Grok 4.6",
+      detail: "Cursor Grok model for agentic coding tasks."
     },
     {
       id: "composer-2.5",
@@ -1016,6 +1036,16 @@ export const conversationAttachmentSummarySchema = z.object({
   uri: z.string()
 })
 export type ConversationAttachmentSummary = z.infer<typeof conversationAttachmentSummarySchema>
+
+// Provider image bytes stay in main; only image metadata and preview URIs cross IPC.
+export const generatedImageSummarySchema = z.discriminatedUnion("status", [
+  z.object({
+    status: z.literal("ready"),
+    attachment: conversationAttachmentSummarySchema.extend({ kind: z.literal("image") })
+  }),
+  z.object({ status: z.literal("unavailable") })
+])
+export type GeneratedImageSummary = z.infer<typeof generatedImageSummarySchema>
 
 export const conversationMessageSummarySchema = z.object({
   id: z.string(),

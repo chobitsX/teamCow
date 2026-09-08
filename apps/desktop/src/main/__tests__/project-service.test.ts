@@ -6350,7 +6350,7 @@ describe("createProjectService", () => {
         },
         {
           providerKind: "opencode" as const,
-          model: "anthropic/claude-sonnet-4-6",
+          model: "anthropic/claude-sonnet-5",
           content: "/agent reviewer Review the patch",
           expected: { prompt: "Review the patch", options: { agent: "reviewer" } }
         },
@@ -7199,7 +7199,7 @@ describe("createProjectService", () => {
       const created = await service.createConversation({
         projectId: imported.project.id,
         providerKind: "opencode",
-        model: "anthropic/claude-sonnet-4-6",
+        model: "anthropic/claude-sonnet-5",
         executionTarget: { type: "default" }
       })
       if (created.status !== "created") {
@@ -7223,7 +7223,7 @@ describe("createProjectService", () => {
       expect(runProviderCalls).toHaveLength(1)
       expect(runProviderCalls[0]).toMatchObject({
         provider: "opencode",
-        model: "anthropic/claude-sonnet-4-6",
+        model: "anthropic/claude-sonnet-5",
         accessMode: "worktree-write",
         prompt: "Implement the first OpenCode task",
         worktreeRootPath: realpathSync(repoRoot),
@@ -7234,7 +7234,7 @@ describe("createProjectService", () => {
 
       expect(completedTimeline.timeline.runs[0]).toMatchObject({
         provider: "opencode",
-        model: "anthropic/claude-sonnet-4-6",
+        model: "anthropic/claude-sonnet-5",
         worktreeId: imported.project.defaultWorktree.id,
         status: "completed"
       })
@@ -7568,6 +7568,66 @@ describe("createProjectService", () => {
     service.close()
     rmSync(userDataPath, { recursive: true, force: true })
     rmSync(repoRoot, { recursive: true, force: true })
+  })
+
+  it("persists generated images before pushing events and serves only the owning conversation", async () => {
+    const onRunEvent = vi.fn()
+    const fixture = await createConversationFileFixture({ executionRunStatus: "completed", serviceDeps: { onRunEvent } })
+    const { service, userDataPath, repoRoot, conversation } = fixture
+    try {
+      const result = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jg1sAAAAASUVORK5CYII="
+      const input = { conversationId: conversation.id, runId: "conversation-file-run", type: "run.artifact.changed" as const,
+        providerEventId: "image-1", payload: { contentType: "imageGeneration", phase: "completed", itemId: "image-1", imageSource: { id: "image-1", result } } }
+      const first = service.appendRunEvent(input)
+      expect(service.appendRunEvent(input).id).toBe(first.id)
+      expect(onRunEvent).toHaveBeenCalledTimes(1)
+      expect(onRunEvent.mock.calls[0][0].payload.image.status).toBe("ready")
+      expect(JSON.stringify(first)).not.toContain(result)
+      const timeline = service.getConversationTimeline(conversation.id)
+      if (timeline.status !== "ok") throw new Error("expected timeline")
+      expect(timeline.timeline.artifacts).toHaveLength(1)
+      const uri = timeline.timeline.artifacts[0].uri!
+      const image = service.resolveConversationAttachment(uri)
+      expect(image?.mimeType).toBe("image/png")
+      expect(readFileSync(image!.path).toString("base64")).toBe(result)
+      expect(service.resolveConversationAttachment(uri.replace(conversation.id, "another-conversation"))).toBeNull()
+      expect(() => service.appendRunEvent({ ...input, conversationId: "another-conversation" })).toThrow("was not found")
+    } finally {
+      service.close()
+      rmSync(userDataPath, { recursive: true, force: true })
+      rmSync(repoRoot, { recursive: true, force: true })
+    }
+  })
+
+  it.each(["full", "paged"])("recovers legacy generated images in %s history once and keeps an app-owned copy", async (mode) => {
+    const { service, userDataPath, repoRoot, conversation } = await createConversationFileFixture({ executionRunStatus: "completed" })
+    try {
+      const savedPath = join(repoRoot, "lotus.png")
+      writeFileSync(savedPath, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jg1sAAAAASUVORK5CYII=", "base64"))
+      const db = createAppDatabase(join(userDataPath, "teamcow.sqlite"))
+      db.db.insert(runEventsTable).values({ id: "legacy-image-event", conversationId: conversation.id, runId: "conversation-file-run", sequence: 1,
+        type: "run.progress", createdAt: "2026-07-07T00:00:01.000Z", payload: JSON.stringify({
+          contentType: "imageGeneration", phase: "completed", itemId: "native-image", rawType: "item/completed",
+          item: { type: "imageGeneration", id: "native-image", savedPath, result: "iVBOR...[TRUNCATED]" }
+        }) }).run()
+      db.close()
+      const history = () => mode === "full" ? service.getConversationTimeline(conversation.id)
+        : service.getConversationTimelinePage({ conversationId: conversation.id, limit: 20 })
+      const loaded = history()
+      if (loaded.status !== "ok") throw new Error("expected history")
+      expect(loaded.timeline.events[0]).toMatchObject({ id: "legacy-image-event", sequence: 1, type: "run.artifact.changed", payload: { image: { status: "ready" } } })
+      expect(loaded.timeline.artifacts).toHaveLength(1)
+      rmSync(savedPath)
+      const reloaded = history()
+      if (reloaded.status !== "ok") throw new Error("expected history")
+      expect(reloaded.timeline.artifacts).toHaveLength(1)
+      expect(reloaded.timeline.runs[0].status).toBe("completed")
+      expect(service.resolveConversationAttachment(reloaded.timeline.artifacts[0].uri!)).not.toBeNull()
+    } finally {
+      service.close()
+      rmSync(userDataPath, { recursive: true, force: true })
+      rmSync(repoRoot, { recursive: true, force: true })
+    }
   })
 
   it("deduplicates persisted provider events by their native event id", async () => {
@@ -8755,7 +8815,7 @@ describe("createProjectService", () => {
 
       const modelResult = await service.setConversationModel({
         conversationId: created.conversation.id,
-        model: "gpt-5.4-mini"
+        model: "gpt-5.6-luna"
       })
       expect(modelResult.status).toBe("error")
       if (modelResult.status !== "error") {
@@ -8999,7 +9059,7 @@ describe("createProjectService", () => {
 
     const updated = await service.setConversationModel({
       conversationId: created.conversation.id,
-      model: "gpt-5.4-mini"
+      model: "gpt-5.6-luna"
     })
 
     expect(updated.status).toBe("ok")
@@ -9007,8 +9067,8 @@ describe("createProjectService", () => {
       throw new Error("expected ok result")
     }
 
-    expect(updated.conversation.currentModel).toBe("gpt-5.4-mini")
-    expect(service.getCurrentConversation()?.currentModel).toBe("gpt-5.4-mini")
+    expect(updated.conversation.currentModel).toBe("gpt-5.6-luna")
+    expect(service.getCurrentConversation()?.currentModel).toBe("gpt-5.6-luna")
 
     service.close()
     rmSync(userDataPath, { recursive: true, force: true })

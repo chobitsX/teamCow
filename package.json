@@ -1,6 +1,6 @@
 {
   "name": "teamcow",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A local-first, chat-first workspace for coding agents on macOS.",
   "license": "Apache-2.0",
   "private": true,

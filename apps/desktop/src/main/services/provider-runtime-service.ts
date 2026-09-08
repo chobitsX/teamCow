@@ -2,6 +2,7 @@ import { accessSync, constants, existsSync, readFileSync, statSync } from "node:
 import { homedir } from "node:os"
 import { delimiter, dirname, join } from "node:path"
 import { spawn, type ChildProcess } from "node:child_process"
+import { stripVTControlCharacters } from "node:util"
 import { z } from "zod"
 import {
   runCodexAppServerTurn,
@@ -21,6 +22,7 @@ import {
 } from "./cursor-acp-client"
 import { createProviderRuntimeSupervisor } from "./provider-runtime-supervisor"
 import { createProviderCatalogService } from "./provider-catalog-service"
+import { readContentImageSources } from "./provider-image-source"
 import {
   buildPromptWithAttachmentReferences,
   getAttachmentDirectories,
@@ -323,22 +325,66 @@ const discoverCodexModels = async (
   return toFallbackModelOptions("codex")
 }
 
+// These retirements only apply to Codex with ChatGPT sign-in, not API keys or other providers.
+// https://learn.chatgpt.com/docs/models (verified 2026-09-07)
+const retiredCodexChatGptModels = new Set(["gpt-5.2", "gpt-5.3-codex", "gpt-5.4", "gpt-5.4-mini"])
+
+const filterRetiredCodexModels = async (
+  models: ProviderModelOption[],
+  runCommand: NonNullable<ProviderRuntimeServiceDeps["runCommand"]>,
+  command: string,
+  configFilePaths: string[],
+  pathExists: (path: string) => boolean,
+  readFile: (path: string) => string
+): Promise<ProviderModelOption[]> => {
+  if (!models.some((model) => retiredCodexChatGptModels.has(model.id))) return models
+
+  const usesCustomProvider = configFilePaths.some((path) => {
+    if (!pathExists(path)) return false
+    const provider = parseModelProviderFromConfigContent(readFile(path))
+    return provider !== null && provider !== "openai"
+  })
+  if (usesCustomProvider) return models
+
+  const auth = await withTimeout(
+    Promise.resolve().then(() => runCommand(command, ["login", "status"])),
+    MODEL_DISCOVERY_TIMEOUT_MS
+  ).catch(() => null)
+  if (!auth || auth.error || auth.status !== 0 ||
+    !/\blogged in using chatgpt\b/i.test(`${auth.stdout}\n${auth.stderr}`)) {
+    return models
+  }
+
+  const available = models.filter((model) => !retiredCodexChatGptModels.has(model.id))
+  if (available.length === 0) return toFallbackModelOptions("codex")
+  const defaultId = (available.find((model) => model.isDefault) ?? available[0]).id
+  return available.map((model) => ({ ...model, isDefault: model.id === defaultId }))
+}
+
 const discoverOpencodeModels = async (
   runCommand: NonNullable<ProviderRuntimeServiceDeps["runCommand"]>,
   command: string
 ): Promise<ProviderModelOption[]> => {
-  const result = await withTimeout(
-    Promise.resolve(runCommand(command, ["models"])),
+  let result = await withTimeout(
+    Promise.resolve().then(() => runCommand(command, ["models", "--refresh"])),
     MODEL_DISCOVERY_TIMEOUT_MS
-  )
+  ).catch(() => null)
+  // Older CLIs and offline environments can still provide their local native catalog.
+  if (!result || result.error || result.status !== 0) {
+    result = await withTimeout(
+      Promise.resolve().then(() => runCommand(command, ["models"])),
+      MODEL_DISCOVERY_TIMEOUT_MS
+    ).catch(() => null)
+  }
   if (!result || result.error || result.status !== 0) {
     return toFallbackModelOptions("opencode")
   }
 
   const lines = result.stdout
     .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
+    .map((line) => stripVTControlCharacters(line).trim())
+    // --refresh prints a status banner before provider/model IDs.
+    .filter((line) => /^[^\s/]+\/\S+$/.test(line))
 
   if (lines.length === 0) {
     return toFallbackModelOptions("opencode")
@@ -1020,6 +1066,21 @@ const normalizeCodexAppServerNotification = (
       }
     }
 
+    if (rawType === "item/completed" && itemType === "imageGeneration") {
+      return {
+        type: "run.artifact.changed",
+        payload: {
+          ...basePayload,
+          ...(itemId ? { providerEventId: `${rawType}:${itemId}` } : {}),
+          contentType: itemType,
+          itemId,
+          phase: "completed",
+          // Preserve original bytes until main saves them, before raw-payload truncation.
+          imageSource: { id: itemId, savedPath: item?.savedPath, result: item?.result }
+        }
+      }
+    }
+
     return {
       type: "run.progress",
       payload: {
@@ -1027,7 +1088,9 @@ const normalizeCodexAppServerNotification = (
         contentType: itemType,
         itemId,
         phase: rawType === "item/completed" ? "completed" : "running",
-        item: sanitizeProviderPayload(item)
+        item: sanitizeProviderPayload(item),
+        imageSources: rawType === "item/completed" && itemType === "mcpToolCall"
+          ? readContentImageSources(readRecord(item?.result)?.content, itemId ?? context.runId) : []
       }
     }
   }
@@ -1241,7 +1304,11 @@ export const normalizeCursorAcpNotification = (
       type: "run.artifact.changed",
       payload: {
         ...basePayload,
-        contentType: "image",
+        contentType: "imageGeneration",
+        phase: "completed",
+        itemId: readString(params.toolCallId),
+        providerEventId: `cursor/generate_image:${readString(params.toolCallId) ?? context.runId}`,
+        imageSource: { id: readString(params.toolCallId) ?? context.runId, savedPath: params.filePath, result: params.imageData },
         toolCallId: readString(params.toolCallId),
         description: readString(params.description),
         path: readString(params.filePath),
@@ -1267,6 +1334,10 @@ export const normalizeCursorAcpNotification = (
   }
 
   if (updateType === "agent_message_chunk") {
+    const images = readContentImageSources(update?.content, messageId ?? context.runId)
+    if (images.length > 0) {
+      return { type: "run.artifact.changed", payload: { ...updatePayload, contentType: "image", imageSources: images } }
+    }
     const text = readAcpTextContent(update?.content)
     state.assistantText += text
     state.assistantMessageId = messageId ?? state.assistantMessageId
@@ -1316,7 +1387,8 @@ export const normalizeCursorAcpNotification = (
       locations: sanitizeProviderPayload(update?.locations),
       content: sanitizeProviderPayload(update?.content),
       input: sanitizeProviderPayload(update?.rawInput),
-      output: sanitizeProviderPayload(update?.rawOutput)
+      output: sanitizeProviderPayload(update?.rawOutput),
+      imageSources: readContentImageSources([update?.content, readRecord(update?.rawOutput)?.content], toolCallId ?? context.runId)
     }
     if (status === "completed") {
       return { type: "run.tool.completed", payload }
@@ -1507,6 +1579,13 @@ const normalizeClaudeContentBlock = (
     }
   }
 
+  if (blockType === "image") {
+    if (basePayload.rawType === "user") return null
+    return { type: "run.artifact.changed", payload: {
+      ...basePayload, contentType: "image", imageSources: readContentImageSources(block, messageId)
+    } }
+  }
+
   if (blockType === "tool_use") {
     return {
       type: "run.progress",
@@ -1529,6 +1608,7 @@ const normalizeClaudeContentBlock = (
       payload: {
         ...basePayload,
         contentType: blockType,
+        imageSources: readContentImageSources(block.content, readString(block.tool_use_id) ?? messageId),
         toolResult: {
           toolUseId: readString(block.tool_use_id) ?? readString(block.toolUseId),
           isError: readBoolean(block.is_error) ?? readBoolean(block.isError),
@@ -2034,7 +2114,10 @@ const normalizeOpenCodeEvent = (rawEvent: Record<string, unknown>, context: Prov
             input: sanitizeProviderPayload(readRecord(rawEvent.input)),
             output: sanitizeProviderPayload(rawEvent.output)
           },
-          part: sanitizeProviderPayload(readRecord(rawEvent.part))
+          part: sanitizeProviderPayload(readRecord(rawEvent.part)),
+          imageSources: readContentImageSources(readRecord(rawEvent.part)?.type === "file" ? rawEvent.part
+            : readRecord(readRecord(rawEvent.part)?.state)?.attachments,
+            readString(readRecord(rawEvent.part)?.id) ?? context.runId)
         }
       }
     ]
@@ -2100,6 +2183,7 @@ const normalizeOpenCodeEvent = (rawEvent: Record<string, unknown>, context: Prov
 
 type OpenCodeServerNormalizationState = {
   partKinds: Map<string, string>
+  messageRoles: Map<string, string>
 }
 
 const normalizeOpenCodeServerEvent = (
@@ -2126,6 +2210,8 @@ const normalizeOpenCodeServerEvent = (
     const part = readRecord(properties.part)
     const partId = readString(part?.id)
     const partType = readString(part?.type) ?? "unknown"
+    const role = state.messageRoles.get(readString(part?.messageID) ?? "")
+    if (role === "user") return null
     if (partId) {
       state.partKinds.set(partId, partType)
     }
@@ -2139,6 +2225,14 @@ const normalizeOpenCodeServerEvent = (
           messageId: readString(part?.messageID),
           partId
         }
+      }
+    }
+
+    if (partType === "file") {
+      const images = readContentImageSources(part, partId ?? context.runId)
+      if (images.length > 0) return {
+        type: "run.artifact.changed",
+        payload: { ...basePayload, partId, contentType: "image", imageSources: images }
       }
     }
 
@@ -2178,7 +2272,9 @@ const normalizeOpenCodeServerEvent = (
         ...basePayload,
         contentType: partType,
         partId,
-        part: sanitizeProviderPayload(part)
+        part: sanitizeProviderPayload(part),
+        imageSources: readRecord(part?.state)?.status === "completed"
+          ? readContentImageSources(readRecord(part?.state)?.attachments, partId ?? context.runId) : []
       }
     }
   }
@@ -2214,6 +2310,10 @@ const normalizeOpenCodeServerEvent = (
 
   if (rawType === "message.updated") {
     const info = readRecord(properties.info)
+    const messageId = readString(info?.id)
+    const role = readString(info?.role)
+    if (messageId && role) state.messageRoles.set(messageId, role)
+    if (role === "user") return null
     return {
       type: "run.progress",
       payload: {
@@ -3033,7 +3133,15 @@ export const createProviderRuntimeService = (deps: ProviderRuntimeServiceDeps = 
     },
     discoverModels: async (provider) => {
       if (provider.kind === "codex") {
-        return discoverCodexModels(
+        const models = await discoverCodexModels(
+          runCommand,
+          provider.command,
+          provider.configFilePaths ?? [],
+          pathExists,
+          readFile
+        )
+        return filterRetiredCodexModels(
+          models,
           runCommand,
           provider.command,
           provider.configFilePaths ?? [],
@@ -3403,7 +3511,8 @@ export const createProviderRuntimeService = (deps: ProviderRuntimeServiceDeps = 
 
     if (input.provider === "opencode" && !useLegacyOpenCodeTestTransport) {
       const normalizationState: OpenCodeServerNormalizationState = {
-        partKinds: new Map()
+        partKinds: new Map(),
+        messageRoles: new Map()
       }
       let openCodeEvents: ProviderRunEvent[] = []
       try {

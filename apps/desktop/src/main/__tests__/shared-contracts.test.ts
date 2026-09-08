@@ -386,12 +386,29 @@ describe("shared contracts", () => {
   it("keeps the Claude fallback picker focused on auto and current exact models", () => {
     expect(PROVIDER_MODEL_CATALOG.claude.map((model) => model.id)).toEqual([
       "default",
+      "claude-fable-5-1",
       "claude-fable-5",
       "claude-opus-5",
       "claude-opus-4-8",
       "claude-sonnet-5",
       "claude-haiku-4-5"
     ])
+  })
+
+  it("offers current coding models with one default per provider and no retired Codex fallbacks", () => {
+    for (const models of Object.values(PROVIDER_MODEL_CATALOG)) {
+      expect(models.filter((model) => model.isDefault)).toHaveLength(1)
+      expect(new Set(models.map((model) => model.id)).size).toBe(models.length)
+    }
+    const codexIds = PROVIDER_MODEL_CATALOG.codex.map((model) => model.id)
+    expect(codexIds).toEqual([
+      "gpt-6-astra", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.5", "gpt-5.3-codex-spark"
+    ])
+    expect(PROVIDER_MODEL_CATALOG.opencode.map((model) => model.id)).toEqual(expect.arrayContaining([
+      "anthropic/claude-fable-5-1", "anthropic/claude-sonnet-5", "anthropic/claude-opus-5",
+      "openai/gpt-6-astra", "openai/gpt-5.6-sol", "google/gemini-3.8-flash"
+    ]))
+    expect(PROVIDER_MODEL_CATALOG.cursor.map((model) => model.id)).toContain("cursor-grok-4.6-high")
   })
 
   it("accepts git_worktree contracts in typed desktop commands", () => {

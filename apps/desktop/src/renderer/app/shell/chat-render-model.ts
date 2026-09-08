@@ -1,9 +1,19 @@
 import type {
+  GeneratedImageSummary,
   ConversationMessageSummary,
   ConversationRunStatus,
   ConversationTimeline,
   RunEventSummary
 } from "@shared/index"
+import { generatedImageSummarySchema } from "@shared/index"
+
+const readEventImages = (event: RunEventSummary): GeneratedImageSummary[] => {
+  const candidates = Array.isArray(event.payload.images) ? event.payload.images : [event.payload.image]
+  return candidates.flatMap((value) => {
+    const image = generatedImageSummarySchema.safeParse(value)
+    return image.success ? [image.data] : []
+  })
+}
 
 type BaseChatRenderItem = {
   id: string
@@ -56,6 +66,11 @@ export type ProviderMessageRenderItem = BaseChatRenderItem & {
   phase: "commentary" | "final"
   authoritative: boolean
   isRunning: boolean
+}
+
+export type ProviderImageRenderItem = BaseChatRenderItem & {
+  kind: "provider-image"
+  image: GeneratedImageSummary
 }
 
 export type ProviderContextRenderItem = BaseChatRenderItem & {
@@ -158,6 +173,7 @@ export type RawFallbackRenderItem = BaseChatRenderItem & {
 export type ChatRenderItem =
   | UserMessageRenderItem
   | ProviderMessageRenderItem
+  | ProviderImageRenderItem
   | ProviderContextRenderItem
   | ProviderActivityRenderItem
   | SystemSummaryRenderItem
@@ -1256,8 +1272,18 @@ const getProviderMessageText = (event: RunEventSummary) => {
   return readString(item?.text) ?? readString(item?.message)
 }
 
+const readToolContentText = (value: unknown, depth = 0): string => {
+  if (depth > 6) return ""
+  if (typeof value === "string") return value
+  if (Array.isArray(value)) return value.map((block) => readToolContentText(block, depth + 1)).filter(Boolean).join("\n")
+  const block = readRecord(value)
+  if (block?.type === "text") return readString(block.text) ?? ""
+  return block?.type === "content" ? readToolContentText(block.content, depth + 1) : ""
+}
+
 const createEventItem = (event: RunEventSummary): Exclude<ChatRenderItem, UserMessageRenderItem | ProviderMessageRenderItem> | null => {
   const rawDetails = stringifyPayload(event.payload)
+  const hasImages = readEventImages(event).length > 0
 
   if (!event.payload.parseError && (isRunSummaryEvent(event) || isProviderNoticeEvent(event))) {
     return {
@@ -1273,7 +1299,7 @@ const createEventItem = (event: RunEventSummary): Exclude<ChatRenderItem, UserMe
     }
   }
 
-  if (eventNeedsRawFallback(event) || event.payload.parseError) {
+  if ((!hasImages && eventNeedsRawFallback(event)) || event.payload.parseError) {
     return {
       kind: "raw-fallback",
       id: event.id,
@@ -1286,17 +1312,21 @@ const createEventItem = (event: RunEventSummary): Exclude<ChatRenderItem, UserMe
     }
   }
 
-  if (event.type === "run.progress" && !isToolActivityEvent(event)) {
+  if (event.type === "run.progress" && !hasImages && !isToolActivityEvent(event)) {
     return null
   }
 
   const payload = event.payload
   const toolUse = readRecord(payload.toolUse)
   const toolResult = readRecord(payload.toolResult)
+  const partState = readRecord(readRecord(payload.part)?.state)
   const toolOutput =
     readString(toolUse?.output) ??
     readString(toolResult?.content) ??
-    readString(payload.output)
+    readString(payload.output) ??
+    readString(partState?.output) ??
+    (readToolContentText(toolResult?.content ?? payload.content ?? readRecord(payload.output)?.content ??
+      readRecord(readRecord(payload.item)?.result)?.content) || null)
 
   return {
     kind: "tool-event",
@@ -1307,8 +1337,8 @@ const createEventItem = (event: RunEventSummary): Exclude<ChatRenderItem, UserMe
     eventType: event.type,
     summary: summarizePayload(event.payload, event.type),
     rawDetails,
-    toolName: readString(toolUse?.name) ?? readString(payload.name) ?? readString(payload.tool),
-    toolStatus: readString(toolUse?.status) ?? readString(payload.status),
+    toolName: readString(toolUse?.name) ?? readString(payload.toolName) ?? readString(payload.name) ?? readString(payload.tool),
+    toolStatus: readString(toolUse?.status) ?? readString(payload.toolStatus) ?? readString(payload.status),
     toolInput: readRecord(toolUse?.input) ?? readRecord(payload.input),
     toolOutput,
     isToolError: toolResult?.isError === true || toolUse?.status === "error"
@@ -1330,6 +1360,7 @@ export const buildChatRenderItems = (timeline: ConversationTimeline): ChatRender
   const renderedProviderOutputItems = new Set<string>()
   const providerOutputRunIds = new Set<string>([
     ...normalizedProviderOutputRunIds,
+    ...timeline.events.filter((event) => readEventImages(event).length > 0).map((event) => event.runId),
     ...timeline.messages
       .filter((message) => message.role === "assistant" && message.runId)
       .map((message) => message.runId as string)
@@ -1389,6 +1420,7 @@ export const buildChatRenderItems = (timeline: ConversationTimeline): ChatRender
   })
 
   const items: ChatRenderItem[] = []
+  const renderedImageIds = new Set<string>()
   const emittedPermissionRequests = new Set<string>()
   const emittedToolFailures = new Set<string>()
 
@@ -1517,6 +1549,23 @@ export const buildChatRenderItems = (timeline: ConversationTimeline): ChatRender
     }
 
     const { event } = entry
+    const images = readEventImages(event)
+    for (const [index, image] of images.entries()) {
+      // eslint-disable-next-line i18next/no-literal-string -- stable internal render key, not user-visible text.
+      const key = image.status === "ready" ? image.attachment.id : `${event.id}:image:${index}`
+      if (renderedImageIds.has(key)) continue
+      renderedImageIds.add(key)
+      items.push({ id: event.payload.image ? event.id : `${event.id}:image:${index}`, runId: event.runId,
+        createdAt: event.createdAt, kind: "provider-image", image })
+    }
+    if (images.length > 0) {
+      if (event.type !== "run.artifact.changed") {
+        const toolItem = createEventItem(event)
+        if (toolItem) items.push(toolItem)
+      }
+      appendRunSummaryItems(event)
+      continue
+    }
     const providerOutputItem = itemByAnchorEventId.get(event.id)
     if (providerOutputItem && !renderedProviderOutputItems.has(providerOutputItem.id)) {
       items.push(providerOutputItem)

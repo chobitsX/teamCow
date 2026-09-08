@@ -73,6 +73,8 @@
   "composer.attachment.error.total-too-large": "Attachments can total up to {{limit}} MB per message.",
   "composer.attachment.error.read": "TeamCow could not read the selected attachment. Check its permissions and try again.",
   "image.preview.open": "Preview image {{name}}",
+  "image.generated": "Generated image",
+  "image.unavailable": "The generated image could not be loaded. The file may be missing or unreadable.",
   "image.preview.close": "Close image preview",
   "image.preview.controls": "Image zoom controls",
   "image.preview.zoom-in": "Zoom in",
